@@ -140,25 +140,21 @@
     let jogosData = [];
     let diaSelecionado = "Todos";
     let turmaLocal = localStorage.getItem('jimTurma') || "Todas";
-    let loadedOnce = false;
-    let updateTimer = null;
+    let carregando = false;
 
-    async function fetchJogos() {
+    async function carregarJogos() {
+      if (carregando) return;
+      carregando = true;
+
       try {
         const resp = await fetch(API_URL, { cache: "no-store" });
         const data = await resp.json();
         jogosData = data.jogos || [];
         renderAll();
-        loadedOnce = true;
       } catch (err) {
-        console.error("Erro ao buscar JSON:", err);
-        if (!loadedOnce) {
-          document.getElementById("listaJogos").innerHTML = `
-            <div class="bg-white p-4 rounded-xl shadow-sm border border-red-200 text-red-700">
-              Erro ao carregar jogos.
-            </div>
-          `;
-        }
+        console.error("Erro ao carregar jogos:", err);
+      } finally {
+        carregando = false;
       }
     }
 
@@ -168,18 +164,10 @@
       turmaLocal = turma;
     }
 
-    function carregarTurmaLocal() {
-      const turma = localStorage.getItem('jimTurma');
-      if (turma) {
-        document.getElementById("filterTurma").value = turma;
-        turmaLocal = turma;
-      }
-    }
-
     function setDia(dia) {
       diaSelecionado = dia;
       document.querySelectorAll(".btn-dia").forEach(btn => {
-        if (btn.innerText.includes(dia)) {
+        if(btn.innerText.includes(dia)) {
           btn.className = "btn-dia px-3 py-1.5 text-xs font-bold rounded-lg bg-blue-600 text-white";
         } else {
           btn.className = "btn-dia px-3 py-1.5 text-xs font-bold rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200";
@@ -266,7 +254,7 @@
         return matchMod && matchTurma && matchDia;
       });
 
-      if (jogosFiltrados.length === 0) {
+      if (!jogosFiltrados.length) {
         container.innerHTML = `<div class="text-center text-gray-500 py-10 bg-white rounded-xl shadow-sm border">Nenhum jogo encontrado.</div>`;
         return;
       }
@@ -287,7 +275,8 @@
       const isMinhaTurma = turmaLocal !== "Todas" && (t1Str === turmaBusca || t2Str === turmaBusca || t1Str.includes(turmaBusca) || t2Str.includes(turmaBusca));
 
       let classDestaque = "";
-      if (isMinhaTurma && enc && win1) classDestaque = "vitoria jogo-destaque";
+      if (isMinhaTurma && j.status === "Em Andamento") classDestaque = "border-red-400 bg-red-50";
+      else if (isMinhaTurma && enc && win1) classDestaque = "vitoria jogo-destaque";
       else if (isMinhaTurma && enc && win2) classDestaque = "derrota jogo-destaque";
       else if (isMinhaTurma) classDestaque = "jogo-destaque";
 
@@ -295,7 +284,9 @@
       card.className = `bg-white p-4 rounded-xl shadow-sm border border-gray-200 ${classDestaque}`;
 
       let badgeNovo = "";
-      if (enc && j.status === "Encerrado") {
+      if (j.status === "Em Andamento") {
+        badgeNovo = `<span class="badge-novo text-xs font-bold bg-red-500 text-white px-2 py-1 rounded-full ml-2">🔴 AO VIVO</span>`;
+      } else if (enc) {
         badgeNovo = `<span class="badge-novo text-xs font-bold bg-green-500 text-white px-2 py-1 rounded-full ml-2">✓ RESULTADO NOVO</span>`;
       }
 
@@ -303,10 +294,9 @@
         <div class="flex justify-between items-center mb-2">
           <span class="text-xs font-bold text-blue-700 bg-blue-50 px-2.5 py-1 rounded-md">${j.modalidade}</span>
           <div class="flex items-center">
-            <span class="text-xs font-semibold ${enc ? 'text-green-600 bg-green-50 px-2 py-0.5 rounded' : 'text-amber-600 bg-amber-50 px-2 py-0.5 rounded'}">
-              ${enc ? 'Encerrado' : (j.horario || 'Em breve')}
+            <span class="text-xs font-semibold ${j.status === 'Em Andamento' ? 'text-red-600 bg-red-50 px-2 py-0.5 rounded' : (enc ? 'text-green-600 bg-green-50 px-2 py-0.5 rounded' : 'text-amber-600 bg-amber-50 px-2 py-0.5 rounded')}">
+              ${j.status === 'Em Andamento' ? 'AO VIVO' : (enc ? 'Encerrado' : (j.horario || 'Em breve'))}
             </span>
-            ${j.local ? `<span class="text-xs text-gray-500 ml-2"><i class="fas fa-map-marker-alt mr-1"></i>${j.local}</span>` : ''}
             ${badgeNovo}
           </div>
         </div>
@@ -330,13 +320,9 @@
       return card;
     }
 
-    async function startAutoUpdate() {
-      await fetchJogos();
-      updateTimer = setInterval(fetchJogos, 10000);
-    }
-
     carregarTurmaLocal();
-    startAutoUpdate();
+    carregarJogos();
+    setInterval(carregarJogos, 10000);
   </script>
 </body>
 </html>
