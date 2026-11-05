@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JIM 2026.2 — AAAMCTN</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    .bg-cacique { background-color: #0F172A; }
+    .bg-accent { background-color: #2563EB; }
+  </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+  <!-- HEADER -->
+  <header class="bg-cacique text-white shadow-lg sticky top-0 z-50">
+    <div class="max-w-6xl mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center font-bold text-xl">
+          <i class="fas fa-trophy"></i>
+        </div>
+        <div>
+          <h1 class="text-xl font-bold tracking-wide">JIM 2026.2 — AAAMCTN</h1>
+          <p class="text-xs text-gray-400">Associação Atlética Académica de Medicina Cacique Tuba-nharô</p>
+        </div>
+      </div>
+      
+      <nav class="flex bg-slate-800 p-1 rounded-lg">
+        <button id="btnTabEscala" onclick="showTab('escala')" class="px-4 py-2 text-sm font-semibold rounded-md bg-accent text-white shadow transition">
+          <i class="fas fa-clipboard-list mr-1"></i> Escala
+        </button>
+        <button id="btnTabJogos" onclick="showTab('jogos')" class="px-4 py-2 text-sm font-semibold rounded-md text-gray-300 hover:text-white transition">
+          <i class="fas fa-gamepad mr-1"></i> Jogos
+        </button>
+        <button id="btnTabRanking" onclick="showTab('ranking')" class="px-4 py-2 text-sm font-semibold rounded-md text-gray-300 hover:text-white transition">
+          <i class="fas fa-chart-line mr-1"></i> Classificação
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="max-w-6xl mx-auto px-4 py-6">
+
+    <!-- ESCALA -->
+    <section id="tabEscala">
+      <div class="mb-6 flex flex-col md:flex-row gap-4 justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-gray-200">
+        <div class="relative w-full md:w-80">
+          <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+          <input type="text" id="inputBusca" oninput="filtrarEscala()" placeholder="Buscar responsável..." 
+                 class="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500">
+        </div>
+        
+        <div class="flex flex-wrap gap-2 w-full md:w-auto">
+          <button onclick="filtrarDia('Todos')" class="btn-dia px-3 py-1.5 text-xs font-semibold rounded-lg bg-blue-600 text-white">Todos</button>
+          <button onclick="filtrarDia('Quinta-feira')" class="btn-dia px-3 py-1.5 text-xs font-semibold rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300">Quinta</button>
+          <button onclick="filtrarDia('Sexta-feira')" class="btn-dia px-3 py-1.5 text-xs font-semibold rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300">Sexta</button>
+          <button onclick="filtrarDia('Sábado')" class="btn-dia px-3 py-1.5 text-xs font-semibold rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300">Sábado</button>
+          <button onclick="filtrarDia('Domingo')" class="btn-dia px-3 py-1.5 text-xs font-semibold rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300">Domingo</button>
+        </div>
+      </div>
+
+      <div id="cardsEscala" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+    </section>
+
+    <!-- JOGOS -->
+    <section id="tabJogos" class="hidden">
+      <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 mb-6 flex flex-col md:flex-row justify-between items-center gap-4">
+        <div>
+          <h2 class="text-lg font-bold text-gray-900 mb-1">Central de Confrontos JIM 2026.2</h2>
+          <p class="text-xs text-gray-500">Selecione as turmas nas caixas. Ao alterar o placar, os vencedores e o banco do Google Sheets são atualizados em tempo real.</p>
+        </div>
+        
+        <div class="w-full md:w-64">
+          <select id="selectModalidade" onchange="renderJogos()" class="w-full p-2 bg-gray-50 border border-gray-300 rounded-lg text-xs font-semibold text-gray-700">
+            <option value="Todas">Todas as Modalidades</option>
+            <option value="Futebol Sete Masc">Futebol Sete Masc</option>
+            <option value="Futebol Sete Fem">Futebol Sete Fem</option>
+            <option value="Vôlei Masc">Vôlei Masc</option>
+            <option value="Vôlei Fem">Vôlei Fem</option>
+            <option value="Beach Tennis">Beach Tennis</option>
+            <option value="Tênis Masc">Tênis Masc</option>
+            <option value="Tênis Fem">Tênis Fem</option>
+            <option value="Sinuca">Sinuca</option>
+            <option value="Pebolim">Pebolim</option>
+            <option value="FIFA">FIFA</option>
+            <option value="Xadrez">Xadrez</option>
+            <option value="Truco Gaudério">Truco Gaudério</option>
+            <option value="Truco Paulista">Truco Paulista</option>
+            <option value="Jogos Alcoólicos">Jogos Alcoólicos</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="listaJogos" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+    </section>
+
+    <!-- RANKING -->
+    <section id="tabRanking" class="hidden">
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div class="p-4 bg-slate-900 text-white flex justify-between items-center">
+          <div>
+            <h2 class="text-lg font-bold">Classificação Geral por Turmas</h2>
+            <p class="text-xs text-gray-400">Pontuação calculada com base nos Artigos 89 a 94 do Regulamento JIM 2026.2</p>
+          </div>
+          <span class="text-xs bg-blue-600 px-3 py-1 rounded-full font-bold">Oficial AAAMCTN</span>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="bg-gray-100 text-gray-700 text-xs font-bold uppercase border-b border-gray-200">
+                <th class="p-3 text-center">Pos</th>
+                <th class="p-3">Turma</th>
+                <th class="p-3 text-center">Pontos Totais</th>
+                <th class="p-3 text-center">Coletivas (24-8 pts)</th>
+                <th class="p-3 text-center">Indiv/Boteco (10-3 pts)</th>
+              </tr>
+            </thead>
+            <tbody id="tabelaRanking" class="divide-y divide-gray-200 text-sm"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    const escalaData = [
+      {"dia": "Quinta-feira", "modalidade": "Tênis de Mesa", "resp": "Tannit, Maria Luiza e Ana Clara", "horario": "Dia todo"},
+      {"dia": "Quinta-feira", "modalidade": "Sinuca", "resp": "Campigotto e Pedro Ribeiro", "horario": "Dia todo"},
+      {"dia": "Quinta-feira", "modalidade": "Pebolim", "resp": "Bianca Viana", "horario": "Dia todo"},
+      {"dia": "Quinta-feira", "modalidade": "Fifa", "resp": "Pk e Gabriel Benedet", "horario": "Dia todo"},
+      {"dia": "Quinta-feira", "modalidade": "Xadrez", "resp": "Léo Paixão", "horario": "Dia todo"},
+      {"dia": "Quinta-feira", "modalidade": "Atletismo", "resp": "Lara C., Matheus D, Carlos", "horario": "Dia todo"},
+      {"dia": "Sexta-feira", "modalidade": "Futebol", "resp": "Gustavo Barbosa e Menegaz", "horario": "17h30 às 20h"},
+      {"dia": "Sexta-feira", "modalidade": "Futebol", "resp": "Carlos e Lara C", "horario": "20h às 22h"},
+      {"dia": "Sexta-feira", "modalidade": "Vôlei", "resp": "Bianca Viana e Malu", "horario": "18h às 19h30"},
+      {"dia": "Sexta-feira", "modalidade": "Vôlei", "resp": "Matheus D e Léo Paixão", "horario": "19h30 às 21h"},
+      {"dia": "Sexta-feira", "modalidade": "Jogos alcoólicos", "resp": "Léo Paixão e Matheus D", "horario": "Dia todo"},
+      {"dia": "Sábado", "modalidade": "Futebol", "resp": "Lari e Fran", "horario": "9h30 às 12h"},
+      {"dia": "Sábado", "modalidade": "Futebol", "resp": "Tessman e Pk", "horario": "12h às 15h"},
+      {"dia": "Sábado", "modalidade": "Futebol", "resp": "Pedro Ribeiro e Gustavo B", "horario": "15h às 17h30"},
+      {"dia": "Sábado", "modalidade": "Futebol", "resp": "Carlos e Luiz Gustavo", "horario": "17h30 às 20h30"},
+      {"dia": "Sábado", "modalidade": "Truco Gaudério e Paulista", "resp": "Campigotto e Gustavo Tierling", "horario": "a partir de 14h"},
+      {"dia": "Sábado", "modalidade": "Vôlei", "resp": "Ana Clara e Maria Luiza", "horario": "10h às 12h"},
+      {"dia": "Sábado", "modalidade": "Vôlei", "resp": "Vitória e Tannit", "horario": "13h às 15h"},
+      {"dia": "Sábado", "modalidade": "Vôlei", "resp": "Lara Benedet e Anna", "horario": "15h às 17h"},
+      {"dia": "Sábado", "modalidade": "Vôlei", "resp": "Julia Furtado e Camila", "horario": "17h às 19h"},
+      {"dia": "Sábado", "modalidade": "Beach Tênis", "resp": "Julia Furtado e Bianca", "horario": "15h às 17h"},
+      {"dia": "Sábado", "modalidade": "Beach Tênis", "resp": "Nickchaela e Ph", "horario": "17h às 19h"},
+      {"dia": "Domingo", "modalidade": "Beach Tênis", "resp": "Vitória e Anna", "horario": "Dia todo"},
+      {"dia": "Domingo", "modalidade": "Vôlei", "resp": "Ryan, Léo e Tanit", "horario": "Dia todo"},
+      {"dia": "Domingo", "modalidade": "Futebol", "resp": "Gabriel Benedet e Menegaz", "horario": "11h às 14h"},
+      {"dia": "Domingo", "modalidade": "Futebol", "resp": "Lara C e Matheus D", "horario": "14h às 16h"},
+      {"dia": "Domingo", "modalidade": "Futebol", "resp": "Pedro Ribeiro e Luiz Gustavo", "horario": "16h às 18h30"}
+    ];
+
+    let jogosData = [];
+    let diaFiltro = "Todos";
+    
+    const listaTurmasOpcoes = [
+      "46", "47A", "47B", "47C", "48A", "48B", "48C", "49A", "49B", "49C", "50A", "50B", "50C",
+      "VJ1", "VJ2", "VJ3", "VJ4", "VJ5", "VJ6", "VJ7", "VJ8", "VJ9", "VJ10", "VJ11", "VJ12",
+      "VJ1/6", "VJ2/7", "VJ3/8", "VJ4/9", "VJ5/10", "VJ11/15", "VJ12/16", "VJ13/17", "VJ14/18", "VJ19/21", "VJ20/22"
+    ];
+
+    function carregarJogosDoServidor() {
+      if (typeof google !== 'undefined' && google.script) {
+        google.script.run.withSuccessHandler(data => {
+          jogosData = data;
+          renderJogos();
+        }).getJogosData();
+      }
+    }
+
+    function showTab(tab) {
+      document.getElementById("tabEscala").classList.add("hidden");
+      document.getElementById("tabJogos").classList.add("hidden");
+      document.getElementById("tabRanking").classList.add("hidden");
+
+      document.getElementById("btnTabEscala").className = "px-4 py-2 text-sm font-semibold rounded-md text-gray-300 hover:text-white transition";
+      document.getElementById("btnTabJogos").className = "px-4 py-2 text-sm font-semibold rounded-md text-gray-300 hover:text-white transition";
+      document.getElementById("btnTabRanking").className = "px-4 py-2 text-sm font-semibold rounded-md text-gray-300 hover:text-white transition";
+
+      if(tab === 'escala') {
+        document.getElementById("tabEscala").classList.remove("hidden");
+        document.getElementById("btnTabEscala").className = "px-4 py-2 text-sm font-semibold rounded-md bg-accent text-white shadow transition";
+      } else if(tab === 'jogos') {
+        document.getElementById("tabJogos").classList.remove("hidden");
+        document.getElementById("btnTabJogos").className = "px-4 py-2 text-sm font-semibold rounded-md bg-accent text-white shadow transition";
+        renderJogos();
+      } else if(tab === 'ranking') {
+        document.getElementById("tabRanking").classList.remove("hidden");
+        document.getElementById("btnTabRanking").className = "px-4 py-2 text-sm font-semibold rounded-md bg-accent text-white shadow transition";
+        calcularRanking();
+      }
+    }
+
+    function renderEscala() {
+      const container = document.getElementById("cardsEscala");
+      const busca = document.getElementById("inputBusca").value.toLowerCase();
+      container.innerHTML = "";
+
+      const filtrados = escalaData.filter(item => {
+        const matchDia = (diaFiltro === "Todos" || item.dia === diaFiltro);
+        const matchBusca = item.resp.toLowerCase().includes(busca) || item.modalidade.toLowerCase().includes(busca);
+        return matchDia && matchBusca;
+      });
+
+      filtrados.forEach(item => {
+        const card = document.createElement("div");
+        card.className = "bg-white p-4 rounded-xl shadow-sm border border-gray-200 hover:border-blue-300 transition";
+        card.innerHTML = `
+          <div class="flex justify-between items-start mb-2">
+            <span class="text-xs font-bold uppercase tracking-wider bg-blue-100 text-blue-800 px-2.5 py-1 rounded-md">${item.dia}</span>
+            <span class="text-xs font-semibold text-gray-500 bg-gray-100 px-2 py-0.5 rounded"><i class="far fa-clock mr-1"></i>${item.horario}</span>
+          </div>
+          <h3 class="font-bold text-gray-900 text-base mb-1">${item.modalidade}</h3>
+          <p class="text-sm text-gray-600"><i class="fas fa-users text-blue-500 mr-1.5"></i><strong>Responsáveis:</strong> ${item.resp}</p>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function filtrarDia(dia) {
+      diaFiltro = dia;
+      document.querySelectorAll(".btn-dia").forEach(btn => {
+        if(btn.innerText.includes(dia) || (dia === 'Todos' && btn.innerText === 'Todos')) {
+          btn.className = "btn-dia px-3 py-1.5 text-xs font-semibold rounded-lg bg-blue-600 text-white";
+        } else {
+          btn.className = "btn-dia px-3 py-1.5 text-xs font-semibold rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300";
+        }
+      });
+      renderEscala();
+    }
+
+    function filtrarEscala() { renderEscala(); }
+
+    function gerarOptionsSelect(valorAtual) {
+      let html = "";
+      let encontrou = false;
+      
+      listaTurmasOpcoes.forEach(t => {
+        const selected = t === valorAtual ? "selected" : "";
+        if(t === valorAtual) encontrou = true;
+        html += `<option value="${t}" ${selected}>${t}</option>`;
+      });
+
+      if(!encontrou && valorAtual) {
+        html = `<option value="${valorAtual}" selected>${valorAtual}</option>` + html;
+      }
+      return html;
+    }
+
+    function renderJogos() {
+      const container = document.getElementById("listaJogos");
+      const modalidadeSel = document.getElementById("selectModalidade").value;
+      container.innerHTML = "";
+
+      const jogosFiltrados = jogosData.filter(j => modalidadeSel === "Todas" || j.modalidade === modalidadeSel);
+
+      jogosFiltrados.forEach(j => {
+        const card = document.createElement("div");
+        card.className = "bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex flex-col justify-between hover:border-blue-300 transition";
+        card.innerHTML = `
+          <div class="flex justify-between items-center mb-3">
+            <div>
+              <span class="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded mr-2">${j.modalidade}</span>
+              <span class="text-xs font-medium text-gray-500">${j.fase || ''}${j.horario ? ' • ' + j.horario : ''}</span>
+            </div>
+            <span class="text-xs font-semibold ${j.status === 'Encerrado' ? 'text-green-600' : 'text-amber-600'}">${j.status}</span>
+          </div>
+
+          <div class="flex items-center justify-between my-2 bg-gray-50 p-3 rounded-lg gap-2">
+            <div class="w-2/5">
+              <select onchange="atualizarNomeTime(${j.id}, 1, this.value)" 
+                      class="w-full text-center font-bold text-sm bg-white border border-gray-300 rounded px-2 py-1.5 focus:border-blue-500 focus:outline-none text-gray-800 shadow-sm">
+                ${gerarOptionsSelect(j.t1)}
+              </select>
+            </div>
+            
+            <div class="flex items-center gap-1">
+              <input type="number" id="p1_${j.id}" value="${j.p1}" onchange="salvarNoServidor(${j.id})" class="w-12 text-center text-xl font-bold bg-white border border-gray-300 rounded-md py-1">
+              <span class="font-bold text-gray-400">x</span>
+              <input type="number" id="p2_${j.id}" value="${j.p2}" onchange="salvarNoServidor(${j.id})" class="w-12 text-center text-xl font-bold bg-white border border-gray-300 rounded-md py-1">
+            </div>
+
+            <div class="w-2/5">
+              <select onchange="atualizarNomeTime(${j.id}, 2, this.value)" 
+                      class="w-full text-center font-bold text-sm bg-white border border-gray-300 rounded px-2 py-1.5 focus:border-blue-500 focus:outline-none text-gray-800 shadow-sm">
+                ${gerarOptionsSelect(j.t2)}
+              </select>
+            </div>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function atualizarNomeTime(id, nTime, novoNome) {
+      const jogo = jogosData.find(j => j.id === id);
+      if(jogo) {
+        if(nTime === 1) jogo.t1 = novoNome;
+        if(nTime === 2) jogo.t2 = novoNome;
+        salvarNoServidor(id);
+      }
+    }
+
+    function salvarNoServidor(id) {
+      const jogo = jogosData.find(j => j.id === id);
+      if(!jogo) return;
+
+      const p1El = document.getElementById(`p1_${id}`);
+      const p2El = document.getElementById(`p2_${id}`);
+      
+      if(p1El && p2El) {
+        jogo.p1 = parseInt(p1El.value) || 0;
+        jogo.p2 = parseInt(p2El.value) || 0;
+      }
+
+      if (typeof google !== 'undefined' && google.script) {
+        google.script.run.withSuccessHandler(() => {
+          carregarJogosDoServidor();
+        }).atualizarPlacarNoBanco(jogo.id, jogo.p1, jogo.p2, jogo.t1, jogo.t2);
+      }
+    }
+
+    function calcularRanking() {
+      const turmas = ["46", "47A", "47B", "47C", "48A", "48B", "48C", "49A", "49B", "49C", "50A", "50B", "50C"];
+      const placarGeral = {};
+
+      turmas.forEach(t => placarGeral[t] = { pontos: 0, coletivas: 0, individuais: 0 });
+
+      jogosData.forEach(j => {
+        if(j.status === "Encerrado") {
+          let v1 = j.p1 > j.p2;
+          let v2 = j.p2 > j.p1;
+          
+          if(v1) {
+            let pts = j.tipo === 'coletiva' ? 24 : 10;
+            if (placarGeral[j.t1]) {
+              placarGeral[j.t1].pontos += pts;
+              if(j.tipo === 'coletiva') placarGeral[j.t1].coletivas += pts;
+              else placarGeral[j.t1].individuais += pts;
+            }
+          } else if(v2) {
+            let pts = j.tipo === 'coletiva' ? 24 : 10;
+            if (placarGeral[j.t2]) {
+              placarGeral[j.t2].pontos += pts;
+              if(j.tipo === 'coletiva') placarGeral[j.t2].coletivas += pts;
+              else placarGeral[j.t2].individuais += pts;
+            }
+          }
+        }
+      });
+
+      const ranking = Object.keys(placarGeral).map(t => ({
+        turma: t,
+        ...placarGeral[t]
+      })).sort((a,b) => b.pontos - a.pontos);
+
+      const tbody = document.getElementById("tabelaRanking");
+      tbody.innerHTML = "";
+
+      ranking.forEach((r, idx) => {
+        const tr = document.createElement("tr");
+        tr.className = idx % 2 === 0 ? "bg-white hover:bg-gray-50" : "bg-gray-50 hover:bg-gray-100";
+        tr.innerHTML = `
+          <td class="p-3 text-center font-bold text-gray-700">${idx + 1}º</td>
+          <td class="p-3 font-bold text-blue-900">${r.turma}</td>
+          <td class="p-3 text-center font-bold text-gray-900 text-base">${r.pontos} pts</td>
+          <td class="p-3 text-center text-gray-600">${r.coletivas} pts</td>
+          <td class="p-3 text-center text-gray-600">${r.individuais} pts</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    renderEscala();
+    carregarJogosDoServidor();
+  </script>
+</body>
+</html>
