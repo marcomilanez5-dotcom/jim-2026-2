@@ -4,297 +4,79 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>JIM 2026.2 — Central do Torcedor</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
   <style>
-    body { font-family: 'Inter', sans-serif; }
-    .bg-cacique { background-color: #0F172A; }
-    @keyframes pulse-red {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.4; }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
     }
-    .pulse-live { animation: pulse-red 1.5s infinite; }
+    body, html {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #0f172a;
+    }
+    iframe {
+      width: 100%;
+      height: 100vh;
+      border: none;
+      display: block;
+    }
+    .loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      height: 100vh;
+      background-color: #0f172a;
+      color: white;
+      font-family: Arial, sans-serif;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .spinner {
+      border: 4px solid #2563EB;
+      border-top: 4px solid transparent;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
   </style>
 </head>
-<body class="bg-gray-100 text-gray-800 pb-12">
+<body>
 
-  <!-- HEADER -->
-  <header class="bg-cacique text-white p-4 shadow-md sticky top-0 z-50">
-    <div class="max-w-4xl mx-auto flex justify-between items-center">
-      <div class="flex items-center gap-2">
-        <i class="fas fa-trophy text-yellow-400 text-xl"></i>
-        <div>
-          <h1 class="text-lg font-bold tracking-wide leading-none">JIM 2026.2 — AAAMCTN</h1>
-          <p class="text-xs text-gray-400">Acompanhamento Ao Vivo</p>
-        </div>
-      </div>
-      <!-- Indicador de Atualização Automática (Melhoria 5) -->
-      <div class="text-right text-xs text-gray-300 flex items-center gap-2">
-        <span class="hidden sm:inline">Atualiza em: <strong id="timer">30</strong>s</span>
-        <i class="fas fa-sync-alt fa-spin text-blue-400"></i>
-      </div>
-    </div>
-  </header>
+  <div class="loading" id="loading">
+    <div class="spinner"></div>
+    <p>Carregando JIM 2026.2...</p>
+  </div>
 
-  <main class="max-w-4xl mx-auto p-4 space-y-6">
-
-    <!-- 1. JOGOS AO VIVO / EM ANDAMENTO (Melhoria 1) -->
-    <section id="secaoAoVivo" class="hidden">
-      <div class="bg-red-50 border border-red-200 rounded-xl p-4 shadow-sm">
-        <div class="flex items-center gap-2 mb-3">
-          <span class="w-3 h-3 bg-red-600 rounded-full pulse-live"></span>
-          <h2 class="text-sm font-bold uppercase tracking-wider text-red-700">Acontecendo Agora</h2>
-        </div>
-        <div id="cardsAoVivo" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
-      </div>
-    </section>
-
-    <!-- 2. FILTROS RÁPIDOS: MODALIDADE, TURMA E DIA (Melhoria 2) -->
-    <section class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 space-y-3">
-      <h2 class="text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">Filtrar Confrontos</h2>
-      
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <!-- Filtro por Modalidade -->
-        <div>
-          <label class="block text-xs font-medium text-gray-600 mb-1">Modalidade</label>
-          <select id="filterModalidade" onchange="renderJogos()" class="w-full p-2 bg-gray-50 border border-gray-300 rounded-lg text-sm font-semibold text-gray-800">
-            <option value="Todas">Todas as Modalidades</option>
-            <option value="Futebol Sete Masc">Futebol Sete Masc</option>
-            <option value="Futebol Sete Fem">Futebol Sete Fem</option>
-            <option value="Vôlei Masc">Vôlei Masc</option>
-            <option value="Vôlei Fem">Vôlei Fem</option>
-            <option value="Beach Tennis">Beach Tennis</option>
-            <option value="Tênis Masc">Tênis Masc</option>
-            <option value="Tênis Fem">Tênis Fem</option>
-            <option value="Sinuca">Sinuca</option>
-            <option value="Pebolim">Pebolim</option>
-            <option value="FIFA">FIFA</option>
-            <option value="Xadrez">Xadrez</option>
-            <option value="Truco Gaudério">Truco Gaudério</option>
-            <option value="Truco Paulista">Truco Paulista</option>
-            <option value="Jogos Alcoólicos">Jogos Alcoólicos</option>
-          </select>
-        </div>
-
-        <!-- Filtro por Turma -->
-        <div>
-          <label class="block text-xs font-medium text-gray-600 mb-1">Sua Turma</label>
-          <select id="filterTurma" onchange="renderJogos()" class="w-full p-2 bg-gray-50 border border-gray-300 rounded-lg text-sm font-semibold text-gray-800">
-            <option value="Todas">Todas as Turmas</option>
-            <option value="46">Turma 46</option>
-            <option value="47A">Turma 47A</option>
-            <option value="47B">Turma 47B</option>
-            <option value="47C">Turma 47C</option>
-            <option value="48A">Turma 48A</option>
-            <option value="48B">Turma 48B</option>
-            <option value="48C">Turma 48C</option>
-            <option value="49A">Turma 49A</option>
-            <option value="49B">Turma 49B</option>
-            <option value="49C">Turma 49C</option>
-            <option value="50A">Turma 50A</option>
-            <option value="50B">Turma 50B</option>
-            <option value="50C">Turma 50C</option>
-          </select>
-        </div>
-      </div>
-
-      <!-- Filtro por Dia -->
-      <div class="flex flex-wrap gap-2 pt-1">
-        <button onclick="setDia('Todos')" class="btn-dia px-3 py-1.5 text-xs font-bold rounded-lg bg-blue-600 text-white">Todos os Dias</button>
-        <button onclick="setDia('Quinta')" class="btn-dia px-3 py-1.5 text-xs font-bold rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200">Quinta</button>
-        <button onclick="setDia('Sexta')" class="btn-dia px-3 py-1.5 text-xs font-bold rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200">Sexta</button>
-        <button onclick="setDia('Sábado')" class="btn-dia px-3 py-1.5 text-xs font-bold rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200">Sábado</button>
-        <button onclick="setDia('Domingo')" class="btn-dia px-3 py-1.5 text-xs font-bold rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200">Domingo</button>
-      </div>
-    </section>
-
-    <!-- 4. VISUALIZAÇÃO DE MATA-MATA / CHAVEAMENTO (Melhoria 4) -->
-    <section id="secaoChaveamento" class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 hidden">
-      <h2 class="text-xs font-bold uppercase tracking-wider text-gray-500 mb-3">Chaveamento do Mata-Mata</h2>
-      <div id="bracketContainer" class="flex flex-col md:flex-row gap-4 justify-between items-center overflow-x-auto p-2"></div>
-    </section>
-
-    <!-- LISTA DE TODOS OS PLACARES (Melhoria 5 com Troféu) -->
-    <section>
-      <div id="listaJogos" class="grid grid-cols-1 gap-3"></div>
-    </section>
-
-  </main>
+  <iframe 
+    id="appFrame"
+    src="https://script.google.com/macros/s/AKfycbwrQPgGKBaUpmzB8rCLDKBgF7nFJiv8kFjq3v7l2xg/exec"
+    sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-modals"
+    title="JIM 2026.2 — Central do Torcedor"
+    onload="document.getElementById('loading').style.display='none'; document.getElementById('appFrame').style.display='block';"
+    style="display: none;">
+  </iframe>
 
   <script>
-    let jogosData = [];
-    let diaSelecionado = "Todos";
-    let tempoRestante = 30;
-
-    function carregarJogos() {
-      if (typeof google !== 'undefined' && google.script) {
-        google.script.run.withSuccessHandler(data => {
-          jogosData = data;
-          renderAoVivo();
-          renderJogos();
-          tempoRestante = 30;
-        }).getJogosData();
+    // Se o iFrame não carregar em 10 segundos, mostra mensagem de erro
+    setTimeout(() => {
+      if (document.getElementById('appFrame').style.display === 'none') {
+        document.getElementById('loading').innerHTML = `
+          <p style="color: #ff6b6b; text-align: center;">
+            ⚠️ Erro ao carregar o painel<br>
+            Verifique sua conexão e tente novamente
+          </p>
+        `;
       }
-    }
-
-    // 1. Renderiza bloco "Ao Vivo"
-    function renderAoVivo() {
-      const container = document.getElementById("cardsAoVivo");
-      const secao = document.getElementById("secaoAoVivo");
-      container.innerHTML = "";
-
-      const emAndamento = jogosData.filter(j => j.status === "Em Andamento" || j.status === "Ao Vivo");
-
-      if (emAndamento.length > 0) {
-        secao.classList.remove("hidden");
-        emAndamento.forEach(j => {
-          container.appendChild(criarCardJogo(j, true));
-        });
-      } else {
-        secao.classList.add("hidden");
-      }
-    }
-
-    // 2. Renderiza a lista principal com filtros
-    function renderJogos() {
-      const container = document.getElementById("listaJogos");
-      const mod = document.getElementById("filterModalidade").value;
-      const turma = document.getElementById("filterTurma").value;
-      container.innerHTML = "";
-
-      const jogosFiltrados = jogosData.filter(j => {
-        const matchMod = mod === "Todas" || j.modalidade === mod;
-        
-        const t1Str = String(j.t1 || "").trim().toLowerCase();
-        const t2Str = String(j.t2 || "").trim().toLowerCase();
-        const turmaBusca = String(turma).trim().toLowerCase();
-        
-        const matchTurma = turma === "Todas" || t1Str === turmaBusca || t2Str === turmaBusca || t1Str.includes(turmaBusca) || t2Str.includes(turmaBusca);
-        const matchDia = diaSelecionado === "Todos" || (j.horario && String(j.horario).toLowerCase().includes(diaSelecionado.toLowerCase()));
-        
-        return matchMod && matchTurma && matchDia;
-      });
-
-      if (jogosFiltrados.length === 0) {
-        container.innerHTML = `<div class="text-center text-gray-500 py-10 bg-white rounded-xl shadow-sm border">Nenhum jogo encontrado para estes filtros.</div>`;
-        return;
-      }
-
-      jogosFiltrados.forEach(j => {
-        container.appendChild(criarCardJogo(j, false));
-      });
-
-      renderChaveamento(mod);
-    }
-
-    // 5. Função para criar o Card do Jogo com Troféu e Destaque Visual
-    function criarCardJogo(j, isLive) {
-      const enc = j.status === 'Encerrado';
-      const win1 = enc && j.p1 > j.p2;
-      const win2 = enc && j.p2 > j.p1;
-
-      const card = document.createElement("div");
-      card.className = `bg-white p-4 rounded-xl shadow-sm border ${isLive ? 'border-red-400 bg-red-50/20' : 'border-gray-200'}`;
-
-      card.innerHTML = `
-        <div class="flex justify-between items-center mb-2">
-          <span class="text-xs font-bold text-blue-700 bg-blue-50 px-2.5 py-1 rounded-md">${j.modalidade}</span>
-          <span class="text-xs font-semibold ${enc ? 'text-green-600 bg-green-50 px-2 py-0.5 rounded' : 'text-amber-600 bg-amber-50 px-2 py-0.5 rounded'}">
-            ${enc ? 'Encerrado' : (j.horario || 'Em breve')}
-          </span>
-        </div>
-
-        <div class="flex items-center justify-between bg-gray-50 p-3 rounded-lg mt-2">
-          <!-- Time 1 -->
-          <div class="w-5/12 text-center font-bold text-sm ${win1 ? 'text-blue-900 font-extrabold' : 'text-gray-800'}">
-            ${win1 ? '<i class="fas fa-trophy text-yellow-500 mr-1"></i>' : ''} ${j.t1}
-          </div>
-          
-          <!-- Placar -->
-          <div class="w-2/12 flex items-center justify-center gap-1.5 font-extrabold text-lg">
-            <span class="${win1 ? 'text-blue-600 text-xl' : 'text-gray-700'}">${j.p1}</span>
-            <span class="text-gray-400 font-normal">x</span>
-            <span class="${win2 ? 'text-blue-600 text-xl' : 'text-gray-700'}">${j.p2}</span>
-          </div>
-
-          <!-- Time 2 -->
-          <div class="w-5/12 text-center font-bold text-sm ${win2 ? 'text-blue-900 font-extrabold' : 'text-gray-800'}">
-            ${j.t2} ${win2 ? '<i class="fas fa-trophy text-yellow-500 ml-1"></i>' : ''}
-          </div>
-        </div>
-      `;
-      return card;
-    }
-
-    // 4. Renderiza Árvore Visual Simples do Mata-Mata quando selecionada uma modalidade
-    function renderChaveamento(mod) {
-      const container = document.getElementById("bracketContainer");
-      const secao = document.getElementById("secaoChaveamento");
-
-      if (mod === "Todas") {
-        secao.classList.add("hidden");
-        return;
-      }
-
-      const jogosMod = jogosData.filter(j => j.modalidade === mod);
-      const semis = jogosMod.filter(j => (j.fase || '').toLowerCase().includes("semi"));
-      const final = jogosMod.filter(j => (j.fase || '').toLowerCase().includes("final"));
-
-      if (semis.length === 0 && final.length === 0) {
-        secao.classList.add("hidden");
-        return;
-      }
-
-      secao.classList.remove("hidden");
-      container.innerHTML = "";
-
-      let htmlSemis = `<div class="space-y-2 w-full md:w-1/2"><h3 class="text-xs font-bold text-gray-400 uppercase text-center">Semifinais</h3>`;
-      semis.forEach(s => {
-        htmlSemis += `
-          <div class="bg-gray-50 border p-2 rounded-lg text-xs flex justify-between font-bold">
-            <span>${s.t1} vs ${s.t2}</span>
-            <span class="text-blue-600">${s.p1} x ${s.p2}</span>
-          </div>`;
-      });
-      htmlSemis += `</div>`;
-
-      let htmlFinal = `<div class="w-full md:w-1/2"><h3 class="text-xs font-bold text-yellow-600 uppercase text-center mb-2"><i class="fas fa-crown"></i> Grande Final</h3>`;
-      final.forEach(f => {
-        htmlFinal += `
-          <div class="bg-yellow-50 border border-yellow-300 p-3 rounded-lg text-xs flex justify-between font-extrabold text-gray-900">
-            <span>${f.t1} vs ${f.t2}</span>
-            <span class="text-blue-600 text-sm">${f.p1} x ${f.p2}</span>
-          </div>`;
-      });
-      htmlFinal += `</div>`;
-
-      container.innerHTML = htmlSemis + htmlFinal;
-    }
-
-    function setDia(dia) {
-      diaSelecionado = dia;
-      document.querySelectorAll(".btn-dia").forEach(btn => {
-        if(btn.innerText.includes(dia)) {
-          btn.className = "btn-dia px-3 py-1.5 text-xs font-bold rounded-lg bg-blue-600 text-white";
-        } else {
-          btn.className = "btn-dia px-3 py-1.5 text-xs font-bold rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200";
-        }
-      });
-      renderJogos();
-    }
-
-    // Cronómetro de atualização (Melhoria 5)
-    setInterval(() => {
-      tempoRestante--;
-      if (tempoRestante <= 0) {
-        carregarJogos();
-      } else {
-        const timerEl = document.getElementById("timer");
-        if(timerEl) timerEl.innerText = tempoRestante;
-      }
-    }, 1000);
-
-    carregarJogos();
+    }, 10000);
   </script>
+
 </body>
 </html>
