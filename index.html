@@ -54,6 +54,7 @@
 
   <main class="max-w-4xl mx-auto p-4 space-y-6">
 
+    <!-- PRÓXIMOS JOGOS -->
     <section class="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
       <h2 class="text-sm font-bold uppercase tracking-wider text-gray-700 mb-3 flex items-center gap-2">
         <i class="fas fa-clock"></i> Próximos Jogos da Sua Turma
@@ -63,6 +64,7 @@
       </div>
     </section>
 
+    <!-- JOGOS AO VIVO -->
     <section id="secaoAoVivo" class="hidden">
       <div class="bg-red-50 border border-red-200 rounded-xl p-4 shadow-sm">
         <div class="flex items-center gap-2 mb-3">
@@ -73,9 +75,10 @@
       </div>
     </section>
 
+    <!-- FILTROS -->
     <section class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 space-y-3">
       <h2 class="text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">Filtrar Confrontos</h2>
-      
+
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
           <label class="block text-xs font-medium text-gray-600 mb-1">Modalidade</label>
@@ -97,7 +100,6 @@
             <option value="Jogos Alcoólicos">Jogos Alcoólicos</option>
           </select>
         </div>
-
         <div>
           <label class="block text-xs font-medium text-gray-600 mb-1">Sua Turma</label>
           <select id="filterTurma" onchange="salvarTurmaLocal(); renderAll()" class="w-full p-2 bg-gray-50 border border-gray-300 rounded-lg text-sm font-semibold text-gray-800 border-blue-400">
@@ -118,7 +120,6 @@
           </select>
         </div>
       </div>
-
       <div class="flex flex-wrap gap-2 pt-1">
         <button onclick="setDia('Todos')" class="btn-dia px-3 py-1.5 text-xs font-bold rounded-lg bg-blue-600 text-white">Todos os Dias</button>
         <button onclick="setDia('Quinta')" class="btn-dia px-3 py-1.5 text-xs font-bold rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200">Quinta</button>
@@ -128,15 +129,14 @@
       </div>
     </section>
 
+    <!-- LISTA DE JOGOS -->
     <section>
       <div id="listaJogos" class="grid grid-cols-1 gap-3"></div>
     </section>
-
   </main>
 
   <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbwltAE6CbhINH_jf3S00QrXg05R_Ubz-eDOmKtY338vBkAf8hf4iJ46o47KGiGF17JM/exec?modo=json";
-
     let jogosData = [];
     let diaSelecionado = "Todos";
     let turmaLocal = localStorage.getItem('jimTurma') || "Todas";
@@ -145,7 +145,6 @@
     async function carregarJogos() {
       if (carregando) return;
       carregando = true;
-
       try {
         const resp = await fetch(API_URL, { cache: "no-store" });
         const data = await resp.json();
@@ -162,6 +161,14 @@
       const turma = document.getElementById("filterTurma").value;
       localStorage.setItem('jimTurma', turma);
       turmaLocal = turma;
+    }
+
+    function carregarTurmaLocal() {
+      const turma = localStorage.getItem('jimTurma');
+      if (turma) {
+        document.getElementById("filterTurma").value = turma;
+        turmaLocal = turma;
+      }
     }
 
     function setDia(dia) {
@@ -185,12 +192,10 @@
     function renderProximosJogos() {
       const container = document.getElementById("proximosJogos");
       container.innerHTML = "";
-
       if (turmaLocal === "Todas") {
         container.innerHTML = "<p class='text-gray-500 text-sm'>Selecione sua turma para ver próximos jogos</p>";
         return;
       }
-
       const proximosJogos = jogosData.filter(j => {
         const t1 = String(j.t1).trim().toLowerCase();
         const t2 = String(j.t2).trim().toLowerCase();
@@ -226,9 +231,7 @@
       const container = document.getElementById("cardsAoVivo");
       const secao = document.getElementById("secaoAoVivo");
       container.innerHTML = "";
-
       const emAndamento = jogosData.filter(j => j.status === "Em Andamento" || j.status === "Ao Vivo");
-
       if (emAndamento.length > 0) {
         secao.classList.remove("hidden");
         emAndamento.forEach(j => {
@@ -243,7 +246,6 @@
       const container = document.getElementById("listaJogos");
       const mod = document.getElementById("filterModalidade").value;
       container.innerHTML = "";
-
       const jogosFiltrados = jogosData.filter(j => {
         const matchMod = mod === "Todas" || j.modalidade === mod;
         const t1Str = String(j.t1 || "").trim().toLowerCase();
@@ -253,12 +255,10 @@
         const matchDia = diaSelecionado === "Todos" || (j.horario && String(j.horario).toLowerCase().includes(diaSelecionado.toLowerCase()));
         return matchMod && matchTurma && matchDia;
       });
-
       if (!jogosFiltrados.length) {
         container.innerHTML = `<div class="text-center text-gray-500 py-10 bg-white rounded-xl shadow-sm border">Nenhum jogo encontrado.</div>`;
         return;
       }
-
       jogosFiltrados.forEach(j => {
         container.appendChild(criarCardJogo(j, false));
       });
@@ -266,16 +266,16 @@
 
     function criarCardJogo(j, isLive) {
       const enc = j.status === 'Encerrado';
+      const aoVivo = j.status === 'Em Andamento' || j.status === 'Ao Vivo';
       const win1 = enc && j.p1 > j.p2;
       const win2 = enc && j.p2 > j.p1;
-
       const t1Str = String(j.t1).trim().toLowerCase();
       const t2Str = String(j.t2).trim().toLowerCase();
       const turmaBusca = String(turmaLocal).trim().toLowerCase();
       const isMinhaTurma = turmaLocal !== "Todas" && (t1Str === turmaBusca || t2Str === turmaBusca || t1Str.includes(turmaBusca) || t2Str.includes(turmaBusca));
 
       let classDestaque = "";
-      if (isMinhaTurma && j.status === "Em Andamento") classDestaque = "border-red-400 bg-red-50";
+      if (aoVivo) classDestaque = "border-red-400 bg-red-50";
       else if (isMinhaTurma && enc && win1) classDestaque = "vitoria jogo-destaque";
       else if (isMinhaTurma && enc && win2) classDestaque = "derrota jogo-destaque";
       else if (isMinhaTurma) classDestaque = "jogo-destaque";
@@ -284,7 +284,7 @@
       card.className = `bg-white p-4 rounded-xl shadow-sm border border-gray-200 ${classDestaque}`;
 
       let badgeNovo = "";
-      if (j.status === "Em Andamento") {
+      if (aoVivo) {
         badgeNovo = `<span class="badge-novo text-xs font-bold bg-red-500 text-white px-2 py-1 rounded-full ml-2">🔴 AO VIVO</span>`;
       } else if (enc) {
         badgeNovo = `<span class="badge-novo text-xs font-bold bg-green-500 text-white px-2 py-1 rounded-full ml-2">✓ RESULTADO NOVO</span>`;
@@ -294,24 +294,22 @@
         <div class="flex justify-between items-center mb-2">
           <span class="text-xs font-bold text-blue-700 bg-blue-50 px-2.5 py-1 rounded-md">${j.modalidade}</span>
           <div class="flex items-center">
-            <span class="text-xs font-semibold ${j.status === 'Em Andamento' ? 'text-red-600 bg-red-50 px-2 py-0.5 rounded' : (enc ? 'text-green-600 bg-green-50 px-2 py-0.5 rounded' : 'text-amber-600 bg-amber-50 px-2 py-0.5 rounded')}">
-              ${j.status === 'Em Andamento' ? 'AO VIVO' : (enc ? 'Encerrado' : (j.horario || 'Em breve'))}
+            <span class="text-xs font-semibold ${aoVivo ? 'text-red-600 bg-red-50 px-2 py-0.5 rounded' : (enc ? 'text-green-600 bg-green-50 px-2 py-0.5 rounded' : 'text-amber-600 bg-amber-50 px-2 py-0.5 rounded')}">
+              ${aoVivo ? 'AO VIVO' : (enc ? 'Encerrado' : (j.horario || 'Em breve'))}
             </span>
+            ${j.local ? `<span class="text-xs text-gray-500 ml-2"><i class="fas fa-map-marker-alt mr-1"></i>${j.local}</span>` : ''}
             ${badgeNovo}
           </div>
         </div>
-
         <div class="flex items-center justify-between bg-gray-50 p-3 rounded-lg mt-2">
           <div class="w-5/12 text-center font-bold text-sm ${win1 ? 'text-green-700 font-extrabold' : 'text-gray-800'}">
             ${win1 ? '<i class="fas fa-trophy text-yellow-500 mr-1"></i>' : ''} ${j.t1}
           </div>
-          
           <div class="w-2/12 flex items-center justify-center gap-1.5 font-extrabold text-lg">
             <span class="${win1 ? 'text-green-600 text-xl' : 'text-gray-700'}">${j.p1}</span>
             <span class="text-gray-400 font-normal">x</span>
             <span class="${win2 ? 'text-green-600 text-xl' : 'text-gray-700'}">${j.p2}</span>
           </div>
-
           <div class="w-5/12 text-center font-bold text-sm ${win2 ? 'text-green-700 font-extrabold' : 'text-gray-800'}">
             ${j.t2} ${win2 ? '<i class="fas fa-trophy text-yellow-500 ml-1"></i>' : ''}
           </div>
