@@ -142,25 +142,21 @@
     let turmaLocal = localStorage.getItem('jimTurma') || "Todas";
     let carregando = false;
 
-    // Converte dia e horário em peso numérico para ordenar cronologicamente
     function obterPesoCronologico(j) {
       const h = String(j.horario || "").toLowerCase();
-      let pesoDia = 99; // Se não tiver dia definido, vai para o final
+      let pesoDia = 99;
 
       if (h.includes("quinta")) pesoDia = 1;
       else if (h.includes("sexta")) pesoDia = 2;
       else if (h.includes("sábado") || h.includes("sabado")) pesoDia = 3;
       else if (h.includes("domingo")) pesoDia = 4;
 
-      // Extrai horário no formato HH:MM (ex: "17:30" => 17.5, "09:30" => 9.5)
       const matchHora = h.match(/(\d{1,2}):(\d{2})/);
       let horaDecimal = 0;
       if (matchHora) {
         horaDecimal = parseInt(matchHora[1], 10) + (parseInt(matchHora[2], 10) / 60);
       }
 
-      // Multiplica o dia por 100 para somar com o horário decimal
-      // Ex: Quinta 17:30 = 117.5 | Sexta 09:30 = 209.5 | Sábado = 300.0
       return (pesoDia * 100) + horaDecimal;
     }
 
@@ -220,7 +216,6 @@
         return;
       }
 
-      // Filtra os jogos futuros da turma
       const proximosJogos = jogosData.filter(j => {
         const t1 = String(j.t1).trim().toLowerCase();
         const t2 = String(j.t2).trim().toLowerCase();
@@ -229,10 +224,8 @@
         return isMinhaTurma && (j.status === "Acontecerá" || j.status === "Em breve");
       });
 
-      // ORDENAÇÃO CRONOLÓGICA (Quinta -> Sexta -> Sábado -> Domingo)
       proximosJogos.sort((a, b) => obterPesoCronologico(a) - obterPesoCronologico(b));
 
-      // Pega os 3 mais próximos no tempo
       const proximosTres = proximosJogos.slice(0, 3);
 
       if (proximosTres.length === 0) {
@@ -293,7 +286,6 @@
         return;
       }
 
-      // Ordena também a listagem geral por data/horário
       jogosFiltrados.sort((a, b) => obterPesoCronologico(a) - obterPesoCronologico(b));
 
       jogosFiltrados.forEach(j => {
