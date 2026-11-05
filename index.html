@@ -57,10 +57,10 @@
     <!-- PRÓXIMOS JOGOS -->
     <section class="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
       <h2 class="text-sm font-bold uppercase tracking-wider text-gray-700 mb-3 flex items-center gap-2">
-        <i class="fas fa-clock"></i> Próximos Jogos da Sua Turma
+        <i class="fas fa-clock text-blue-600"></i> Próximos Jogos da Sua Turma (Ordem Cronológica)
       </h2>
       <div id="proximosJogos" class="space-y-2">
-        <p class="text-gray-500 text-sm">Selecione sua turma para ver próximos jogos</p>
+        <p class="text-gray-500 text-sm">Selecione sua turma para ver os próximos jogos</p>
       </div>
     </section>
 
@@ -129,7 +129,7 @@
       </div>
     </section>
 
-    <!-- LISTA DE JOGOS -->
+    <!-- LISTA DE TODOS OS CONFRONTOS -->
     <section>
       <div id="listaJogos" class="grid grid-cols-1 gap-3"></div>
     </section>
@@ -141,6 +141,28 @@
     let diaSelecionado = "Todos";
     let turmaLocal = localStorage.getItem('jimTurma') || "Todas";
     let carregando = false;
+
+    // Converte dia e horário em peso numérico para ordenar cronologicamente
+    function obterPesoCronologico(j) {
+      const h = String(j.horario || "").toLowerCase();
+      let pesoDia = 99; // Se não tiver dia definido, vai para o final
+
+      if (h.includes("quinta")) pesoDia = 1;
+      else if (h.includes("sexta")) pesoDia = 2;
+      else if (h.includes("sábado") || h.includes("sabado")) pesoDia = 3;
+      else if (h.includes("domingo")) pesoDia = 4;
+
+      // Extrai horário no formato HH:MM (ex: "17:30" => 17.5, "09:30" => 9.5)
+      const matchHora = h.match(/(\d{1,2}):(\d{2})/);
+      let horaDecimal = 0;
+      if (matchHora) {
+        horaDecimal = parseInt(matchHora[1], 10) + (parseInt(matchHora[2], 10) / 60);
+      }
+
+      // Multiplica o dia por 100 para somar com o horário decimal
+      // Ex: Quinta 17:30 = 117.5 | Sexta 09:30 = 209.5 | Sábado = 300.0
+      return (pesoDia * 100) + horaDecimal;
+    }
 
     async function carregarJogos() {
       if (carregando) return;
@@ -192,35 +214,44 @@
     function renderProximosJogos() {
       const container = document.getElementById("proximosJogos");
       container.innerHTML = "";
+
       if (turmaLocal === "Todas") {
         container.innerHTML = "<p class='text-gray-500 text-sm'>Selecione sua turma para ver próximos jogos</p>";
         return;
       }
+
+      // Filtra os jogos futuros da turma
       const proximosJogos = jogosData.filter(j => {
         const t1 = String(j.t1).trim().toLowerCase();
         const t2 = String(j.t2).trim().toLowerCase();
         const turmaBusca = String(turmaLocal).trim().toLowerCase();
         const isMinhaTurma = t1 === turmaBusca || t2 === turmaBusca || t1.includes(turmaBusca) || t2.includes(turmaBusca);
         return isMinhaTurma && (j.status === "Acontecerá" || j.status === "Em breve");
-      }).slice(0, 3);
+      });
 
-      if (proximosJogos.length === 0) {
-        container.innerHTML = "<p class='text-gray-500 text-sm'>Nenhum jogo agendado</p>";
+      // ORDENAÇÃO CRONOLÓGICA (Quinta -> Sexta -> Sábado -> Domingo)
+      proximosJogos.sort((a, b) => obterPesoCronologico(a) - obterPesoCronologico(b));
+
+      // Pega os 3 mais próximos no tempo
+      const proximosTres = proximosJogos.slice(0, 3);
+
+      if (proximosTres.length === 0) {
+        container.innerHTML = "<p class='text-gray-500 text-sm'>Nenhum jogo futuro agendado para esta turma.</p>";
         return;
       }
 
-      proximosJogos.forEach(j => {
+      proximosTres.forEach(j => {
         const card = document.createElement("div");
-        card.className = "bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-300 p-3 rounded-lg";
+        card.className = "bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-300 p-3 rounded-lg shadow-sm";
         card.innerHTML = `
           <div class="flex justify-between items-center mb-2">
             <span class="font-bold text-sm text-blue-900">${j.modalidade}</span>
-            <span class="text-xs text-blue-700">${j.horario || "A definir"}${j.local ? " • " + j.local : ""}</span>
+            <span class="text-xs text-blue-800 font-semibold bg-white/70 px-2 py-0.5 rounded">${j.horario || "A definir"}${j.local ? " • " + j.local : ""}</span>
           </div>
           <div class="flex items-center justify-between">
-            <div class="font-bold text-sm">${j.t1}</div>
-            <div class="text-xs text-gray-600">vs</div>
-            <div class="font-bold text-sm">${j.t2}</div>
+            <div class="font-bold text-sm text-gray-800">${j.t1}</div>
+            <div class="text-xs text-gray-500 font-bold uppercase">vs</div>
+            <div class="font-bold text-sm text-gray-800">${j.t2}</div>
           </div>
         `;
         container.appendChild(card);
@@ -246,6 +277,7 @@
       const container = document.getElementById("listaJogos");
       const mod = document.getElementById("filterModalidade").value;
       container.innerHTML = "";
+
       const jogosFiltrados = jogosData.filter(j => {
         const matchMod = mod === "Todas" || j.modalidade === mod;
         const t1Str = String(j.t1 || "").trim().toLowerCase();
@@ -255,10 +287,15 @@
         const matchDia = diaSelecionado === "Todos" || (j.horario && String(j.horario).toLowerCase().includes(diaSelecionado.toLowerCase()));
         return matchMod && matchTurma && matchDia;
       });
+
       if (!jogosFiltrados.length) {
-        container.innerHTML = `<div class="text-center text-gray-500 py-10 bg-white rounded-xl shadow-sm border">Nenhum jogo encontrado.</div>`;
+        container.innerHTML = `<div class="text-center text-gray-500 py-10 bg-white rounded-xl shadow-sm border">Nenhum jogo encontrado para estes filtros.</div>`;
         return;
       }
+
+      // Ordena também a listagem geral por data/horário
+      jogosFiltrados.sort((a, b) => obterPesoCronologico(a) - obterPesoCronologico(b));
+
       jogosFiltrados.forEach(j => {
         container.appendChild(criarCardJogo(j, false));
       });
@@ -305,6 +342,7 @@
           <div class="w-5/12 text-center font-bold text-sm ${win1 ? 'text-green-700 font-extrabold' : 'text-gray-800'}">
             ${win1 ? '<i class="fas fa-trophy text-yellow-500 mr-1"></i>' : ''} ${j.t1}
           </div>
+
           <div class="w-2/12 flex items-center justify-center gap-1.5 font-extrabold text-lg">
             <span class="${win1 ? 'text-green-600 text-xl' : 'text-gray-700'}">${j.p1}</span>
             <span class="text-gray-400 font-normal">x</span>
