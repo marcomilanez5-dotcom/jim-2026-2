@@ -14,7 +14,6 @@
 </head>
 <body class="bg-gray-50 text-gray-800">
 
-  <!-- HEADER -->
   <header class="bg-cacique text-white shadow-lg sticky top-0 z-50">
     <div class="max-w-6xl mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
       <div class="flex items-center gap-3">
@@ -42,8 +41,6 @@
   </header>
 
   <main class="max-w-6xl mx-auto px-4 py-6">
-
-    <!-- ESCALA -->
     <section id="tabEscala">
       <div class="mb-6 flex flex-col md:flex-row gap-4 justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-gray-200">
         <div class="relative w-full md:w-80">
@@ -60,11 +57,9 @@
           <button onclick="filtrarDia('Domingo')" class="btn-dia px-3 py-1.5 text-xs font-semibold rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300">Domingo</button>
         </div>
       </div>
-
       <div id="cardsEscala" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
     </section>
 
-    <!-- JOGOS -->
     <section id="tabJogos" class="hidden">
       <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 mb-6 flex flex-col md:flex-row justify-between items-center gap-4">
         <div>
@@ -92,11 +87,9 @@
           </select>
         </div>
       </div>
-
       <div id="listaJogos" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
     </section>
 
-    <!-- RANKING -->
     <section id="tabRanking" class="hidden">
       <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         <div class="p-4 bg-slate-900 text-white flex justify-between items-center">
@@ -123,7 +116,6 @@
         </div>
       </div>
     </section>
-
   </main>
 
   <script>
@@ -158,14 +150,21 @@
     ];
 
     let jogosData = [];
+    let usuarioAtualizando = false;
 
     function carregarJogosDoServidor() {
+      if (usuarioAtualizando) return;
+      usuarioAtualizando = true;
+
       if (typeof google !== 'undefined' && google.script) {
         google.script.run.withSuccessHandler(data => {
           jogosData = data;
           renderJogos();
           calcularRanking();
+          usuarioAtualizando = false;
         }).getJogosData();
+      } else {
+        usuarioAtualizando = false;
       }
     }
 
@@ -199,8 +198,7 @@
 
       const filtrados = escalaData.filter(item => {
         const matchBusca = item.resp.toLowerCase().includes(busca) || item.modalidade.toLowerCase().includes(busca);
-        const matchDia = true;
-        return matchBusca && matchDia;
+        return matchBusca;
       });
 
       filtrados.forEach(item => {
@@ -242,6 +240,14 @@
       return html;
     }
 
+    function atualizarStatusJogo(id, novoStatus) {
+      if (typeof google !== 'undefined' && google.script) {
+        google.script.run.withSuccessHandler(() => {
+          carregarJogosDoServidor();
+        }).atualizarStatusJogo(id, novoStatus);
+      }
+    }
+
     function renderJogos() {
       const container = document.getElementById("listaJogos");
       const modalidadeSel = document.getElementById("selectModalidade").value;
@@ -253,12 +259,24 @@
         const card = document.createElement("div");
         card.className = "bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex flex-col justify-between hover:border-blue-300 transition";
         card.innerHTML = `
-          <div class="flex justify-between items-center mb-3">
+          <div class="flex justify-between items-center mb-3 gap-2">
             <div>
               <span class="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded mr-2">${j.modalidade}</span>
               <span class="text-xs font-medium text-gray-500">${j.fase || ''}${j.horario ? ' • ' + j.horario : ''}${j.local ? ' • ' + j.local : ''}</span>
             </div>
-            <span class="text-xs font-semibold ${j.status === 'Encerrado' ? 'text-green-600' : 'text-amber-600'}">${j.status}</span>
+
+            <div class="flex items-center gap-2">
+              <select onchange="atualizarStatusJogo(${j.id}, this.value)"
+                class="text-xs border rounded px-2 py-1 bg-white border-gray-300">
+                <option value="Acontecerá" ${j.status === 'Acontecerá' ? 'selected' : ''}>Acontecerá</option>
+                <option value="Em Andamento" ${j.status === 'Em Andamento' ? 'selected' : ''}>Em Andamento</option>
+                <option value="Encerrado" ${j.status === 'Encerrado' ? 'selected' : ''}>Encerrado</option>
+              </select>
+
+              <span class="text-xs font-semibold ${j.status === 'Encerrado' ? 'text-green-600' : (j.status === 'Em Andamento' ? 'text-red-600' : 'text-amber-600')}">
+                ${j.status}
+              </span>
+            </div>
           </div>
 
           <div class="flex items-center justify-between my-2 bg-gray-50 p-3 rounded-lg gap-2">
