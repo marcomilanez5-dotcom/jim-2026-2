@@ -15,9 +15,7 @@
       50% { opacity: 0.4; }
     }
     .pulse-live { animation: pulse-red 1.5s infinite; }
-    .badge-novo {
-      animation: pulse 2s infinite;
-    }
+    .badge-novo { animation: pulse 2s infinite; }
     @keyframes pulse {
       0%, 100% { opacity: 1; }
       50% { opacity: 0.6; }
@@ -138,18 +136,27 @@
   </main>
 
   <script>
+    const API_URL = "https://script.google.com/macros/s/AKfycbwltAE6CbhINH_jf3S00QrXg05R_Ubz-eDOmKtY338vBkAf8hf4iJ46o47KGiGF17JM/exec?modo=json";
+
     let jogosData = [];
     let diaSelecionado = "Todos";
     let turmaLocal = localStorage.getItem('jimTurma') || "Todas";
 
-    function carregarJogos() {
-      if (typeof google !== 'undefined' && google.script) {
-        google.script.run.withSuccessHandler(data => {
-          jogosData = data;
-          renderAoVivo();
-          renderJogos();
-          renderProximosJogos();
-        }).getJogosData();
+    async function carregarJogos() {
+      try {
+        const resp = await fetch(API_URL, { cache: "no-store" });
+        const data = await resp.json();
+        jogosData = data.jogos || [];
+        renderAoVivo();
+        renderJogos();
+        renderProximosJogos();
+      } catch (err) {
+        console.error(err);
+        document.getElementById("listaJogos").innerHTML = `
+          <div class="bg-white p-4 rounded-xl shadow-sm border border-red-200 text-red-700">
+            Erro ao carregar jogos.
+          </div>
+        `;
       }
     }
 
@@ -317,6 +324,10 @@
 
     carregarTurmaLocal();
     carregarJogos();
+
+    setInterval(() => {
+      carregarJogos();
+    }, 10000);
   </script>
 </body>
 </html>
