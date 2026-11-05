@@ -3,21 +3,36 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>JIM 2026.2 — Redirecionando...</title>
+  <title>JIM 2026.2 — Central do Torcedor</title>
   <style>
-    body {
+    * {
       margin: 0;
       padding: 0;
+      box-sizing: border-box;
+    }
+    body, html {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
       background-color: #0f172a;
+    }
+    iframe {
+      width: 100%;
+      height: 100vh;
+      border: none;
+      display: block;
+    }
+    .loading {
       display: flex;
       align-items: center;
       justify-content: center;
+      width: 100%;
       height: 100vh;
-      font-family: Arial, sans-serif;
+      background-color: #0f172a;
       color: white;
-    }
-    .container {
-      text-align: center;
+      font-family: Arial, sans-serif;
+      flex-direction: column;
+      gap: 20px;
     }
     .spinner {
       border: 4px solid #2563EB;
@@ -26,7 +41,6 @@
       width: 40px;
       height: 40px;
       animation: spin 1s linear infinite;
-      margin: 0 auto 20px;
     }
     @keyframes spin {
       0% { transform: rotate(0deg); }
@@ -35,14 +49,33 @@
   </style>
 </head>
 <body>
-  <div class="container">
+
+  <div class="loading" id="loading">
     <div class="spinner"></div>
-    <p>Carregando JIM 2026.2 — Central do Torcedor...</p>
+    <p>Carregando JIM 2026.2...</p>
   </div>
 
+  <iframe 
+    id="appFrame"
+    src="https://script.google.com/macros/s/AKfycbwltAE6CbhINH_jf3S00QrXg05R_Ubz-eDOmKtY338vBkAf8hf4iJ46o47KGiGF17JM/exec"
+    sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-modals allow-presentation"
+    title="JIM 2026.2 — Central do Torcedor"
+    onload="document.getElementById('loading').style.display='none'; document.getElementById('appFrame').style.display='block';"
+    style="display: none;">
+  </iframe>
+
   <script>
-    // Redireciona para o Google Apps Script CORRETO
-    window.location.href = "https://script.google.com/macros/s/AKfycbwltAE6CbhINH_jf3S00QrXg05R_Ubz-eDOmKtY338vBkAf8hf4iJ46o47KGiGF17JM/exec";
+    setTimeout(() => {
+      if (document.getElementById('appFrame').style.display === 'none') {
+        document.getElementById('loading').innerHTML = `
+          <p style="color: #ff6b6b; text-align: center;">
+            ⚠️ Erro ao carregar o painel<br>
+            Verifique sua conexão e tente novamente
+          </p>
+        `;
+      }
+    }, 10000);
   </script>
+
 </body>
 </html>
