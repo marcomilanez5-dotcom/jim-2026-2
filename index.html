@@ -32,9 +32,13 @@
       background-color: #FEE2E2 !important;
       border-color: #EF4444 !important;
     }
+    .card-ouro {
+      background: linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%);
+      border: 1.5px solid #FCD34D;
+    }
   </style>
 </head>
-<body class="bg-gray-100 text-gray-800 pb-12">
+<body class="bg-gray-100 text-gray-800 pb-16">
 
   <!-- BANNER DE AVISO DA DIRETORIA -->
   <div id="bannerAviso" class="hidden bg-amber-400 text-amber-950 px-4 py-2 text-xs sm:text-sm font-bold text-center border-b border-amber-500 shadow-sm flex items-center justify-center gap-2">
@@ -42,6 +46,7 @@
     <span id="textoAviso"></span>
   </div>
 
+  <!-- HEADER -->
   <header class="bg-cacique text-white p-4 shadow-md sticky top-0 z-50">
     <div class="max-w-4xl mx-auto flex justify-between items-center">
       <div class="flex items-center gap-2">
@@ -56,9 +61,25 @@
         <i class="fas fa-sync-alt fa-spin text-blue-400"></i>
       </div>
     </div>
+
+    <!-- ABAS DE NAVEGAÇÃO SUPERIOR -->
+    <div class="max-w-4xl mx-auto mt-3 flex gap-2">
+      <button id="btnAbaJogos" onclick="trocarAbaPrincipal('jogos')" 
+              class="flex-1 py-2 text-xs sm:text-sm font-bold rounded-lg bg-blue-600 text-white shadow-sm flex items-center justify-center gap-1.5 transition">
+        <i class="fas fa-futbol"></i>
+        <span>Jogos & Tabela</span>
+      </button>
+      <button id="btnAbaCampeoes" onclick="trocarAbaPrincipal('campeoes')" 
+              class="flex-1 py-2 text-xs sm:text-sm font-bold rounded-lg bg-slate-800 text-gray-300 hover:text-white flex items-center justify-center gap-1.5 transition border border-slate-700">
+        <i class="fas fa-crown text-yellow-400"></i>
+        <span>Campeões do Dia</span>
+        <span id="badgeNumCampeoes" class="hidden ml-1 px-1.5 py-0.2 bg-yellow-500 text-slate-900 text-[10px] font-black rounded-full">0</span>
+      </button>
+    </div>
   </header>
 
-  <main class="max-w-4xl mx-auto p-4 space-y-6">
+  <!-- ================= ABA 1: JOGOS & CONFRONTOS ================= -->
+  <main id="secaoAbaJogos" class="max-w-4xl mx-auto p-4 space-y-6">
 
     <!-- PRÓXIMOS JOGOS -->
     <section class="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
@@ -141,12 +162,61 @@
     </section>
   </main>
 
+  <!-- ================= ABA 2: GALERIA DE CAMPEÕES DO DIA ================= -->
+  <main id="secaoAbaCampeoes" class="max-w-4xl mx-auto p-4 space-y-6 hidden">
+    
+    <div class="bg-gradient-to-r from-amber-500 to-yellow-600 rounded-2xl p-5 text-white shadow-lg flex items-center justify-between">
+      <div>
+        <h2 class="text-xl font-black flex items-center gap-2">
+          <i class="fas fa-medal text-yellow-200 text-2xl"></i>
+          <span>Galeria de Campeões</span>
+        </h2>
+        <p class="text-xs text-yellow-100 mt-0.5">Modalidades encerradas e os detentores dos troféus do JIM 2026.2!</p>
+      </div>
+      <span class="text-3xl">🏆</span>
+    </div>
+
+    <!-- SELETOR DE DIA DOS CAMPEÕES -->
+    <div class="flex flex-wrap gap-2">
+      <button onclick="setDiaCampeoes('Todos')" id="btnCampTodos" class="btn-camp px-3 py-1.5 text-xs font-bold rounded-lg bg-blue-600 text-white shadow-sm">Todos os Dias</button>
+      <button onclick="setDiaCampeoes('Quinta')" id="btnCampQuinta" class="btn-camp px-3 py-1.5 text-xs font-bold rounded-lg bg-white border text-gray-700 hover:bg-gray-50">Quinta</button>
+      <button onclick="setDiaCampeoes('Sexta')" id="btnCampSexta" class="btn-camp px-3 py-1.5 text-xs font-bold rounded-lg bg-white border text-gray-700 hover:bg-gray-50">Sexta</button>
+      <button onclick="setDiaCampeoes('Sábado')" id="btnCampSabado" class="btn-camp px-3 py-1.5 text-xs font-bold rounded-lg bg-white border text-gray-700 hover:bg-gray-50">Sábado</button>
+      <button onclick="setDiaCampeoes('Domingo')" id="btnCampDomingo" class="btn-camp px-3 py-1.5 text-xs font-bold rounded-lg bg-white border text-gray-700 hover:bg-gray-50">Domingo</button>
+    </div>
+
+    <!-- LISTA DE CARDS DE CAMPEÕES -->
+    <div id="containerCampeoes" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+  </main>
+
   <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbwltAE6CbhINH_jf3S00QrXg05R_Ubz-eDOmKtY338vBkAf8hf4iJ46o47KGiGF17JM/exec?modo=json";
     let jogosData = [];
     let diaSelecionado = "Todos";
+    let diaCampeoesSelecionado = "Todos";
     let turmaLocal = localStorage.getItem('jimTurma') || "Todas";
     let carregando = false;
+
+    // CONTROLE DE NAVEGAÇÃO DAS ABAS PRINCIPAIS
+    function trocarAbaPrincipal(aba) {
+      const secaoJogos = document.getElementById("secaoAbaJogos");
+      const secaoCampeoes = document.getElementById("secaoAbaCampeoes");
+      const btnJogos = document.getElementById("btnAbaJogos");
+      const btnCampeoes = document.getElementById("btnAbaCampeoes");
+
+      if (aba === 'jogos') {
+        secaoJogos.classList.remove("hidden");
+        secaoCampeoes.classList.add("hidden");
+        btnJogos.className = "flex-1 py-2 text-xs sm:text-sm font-bold rounded-lg bg-blue-600 text-white shadow-sm flex items-center justify-center gap-1.5 transition";
+        btnCampeoes.className = "flex-1 py-2 text-xs sm:text-sm font-bold rounded-lg bg-slate-800 text-gray-300 hover:text-white flex items-center justify-center gap-1.5 transition border border-slate-700";
+      } else {
+        secaoJogos.classList.add("hidden");
+        secaoCampeoes.classList.remove("hidden");
+        btnCampeoes.className = "flex-1 py-2 text-xs sm:text-sm font-bold rounded-lg bg-yellow-500 text-slate-900 shadow-md flex items-center justify-center gap-1.5 transition";
+        btnJogos.className = "flex-1 py-2 text-xs sm:text-sm font-bold rounded-lg bg-slate-800 text-gray-300 hover:text-white flex items-center justify-center gap-1.5 transition border border-slate-700";
+        renderCampeoes();
+      }
+    }
 
     function definirDiaAtualAutomatico() {
       const hoje = new Date().getDay(); 
@@ -167,6 +237,18 @@
           btn.className = "btn-dia px-3 py-1.5 text-xs font-bold rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200";
         }
       });
+    }
+
+    function setDiaCampeoes(dia) {
+      diaCampeoesSelecionado = dia;
+      document.querySelectorAll(".btn-camp").forEach(btn => {
+        if (btn.innerText.includes(dia) || (dia === "Todos" && btn.innerText.includes("Todos"))) {
+          btn.className = "btn-camp px-3 py-1.5 text-xs font-bold rounded-lg bg-blue-600 text-white shadow-sm";
+        } else {
+          btn.className = "btn-camp px-3 py-1.5 text-xs font-bold rounded-lg bg-white border text-gray-700 hover:bg-gray-50";
+        }
+      });
+      renderCampeoes();
     }
 
     function obterPesoCronologico(j) {
@@ -205,6 +287,7 @@
         }
 
         renderAll();
+        atualizarBadgeCampeoes();
       } catch (err) {
         console.error("Erro ao carregar jogos:", err);
       } finally {
@@ -236,6 +319,7 @@
       renderAoVivo();
       renderProximosJogos();
       renderJogos();
+      renderCampeoes();
     }
 
     function renderProximosJogos() {
@@ -324,6 +408,124 @@
       });
     }
 
+    // ==========================================
+    // NOVA FUNÇÃO: RENDERIZAR CAMPEÕES DO DIA
+    // ==========================================
+    function extrairDiaJogo(j) {
+      const h = String(j.horario || "").toLowerCase();
+      if (h.includes("quinta")) return "Quinta";
+      if (h.includes("sexta")) return "Sexta";
+      if (h.includes("sábado") || h.includes("sabado")) return "Sábado";
+      if (h.includes("domingo")) return "Domingo";
+      return "Outros";
+    }
+
+    function atualizarBadgeCampeoes() {
+      const finaisEncerradas = jogosData.filter(j => 
+        String(j.fase || "").toLowerCase().includes("final") && j.status === "Encerrado" && (j.p1 !== j.p2)
+      );
+      const badge = document.getElementById("badgeNumCampeoes");
+      if (finaisEncerradas.length > 0) {
+        badge.innerText = finaisEncerradas.length;
+        badge.classList.remove("hidden");
+      } else {
+        badge.classList.add("hidden");
+      }
+    }
+
+    function renderCampeoes() {
+      const container = document.getElementById("containerCampeoes");
+      if (!container) return;
+      container.innerHTML = "";
+
+      // Filtra jogos que sejam Finais já encerradas com vencedor
+      const finaisEncerradas = jogosData.filter(j => {
+        const ehFinal = String(j.fase || "").toLowerCase().includes("final");
+        const enc = j.status === "Encerrado";
+        const temVencedor = Number(j.p1) !== Number(j.p2);
+        const dia = extrairDiaJogo(j);
+        const matchDia = (diaCampeoesSelecionado === "Todos" || dia === diaCampeoesSelecionado);
+
+        return ehFinal && enc && temVencedor && matchDia;
+      });
+
+      if (finaisEncerradas.length === 0) {
+        container.innerHTML = `
+          <div class="col-span-full bg-white p-8 rounded-2xl border border-gray-200 text-center space-y-2 shadow-sm">
+            <div class="text-4xl">⏳</div>
+            <h3 class="font-bold text-gray-800 text-base">Nenhum campeão consagrado ainda${diaCampeoesSelecionado !== 'Todos' ? ' para ' + diaCampeoesSelecionado : ''}!</h3>
+            <p class="text-xs text-gray-500">Assim que as partidas finais forem encerradas no painel, os títulos aparecerão aqui automaticamente.</p>
+          </div>
+        `;
+        return;
+      }
+
+      finaisEncerradas.forEach(j => {
+        const campeao = j.p1 > j.p2 ? j.t1 : j.t2;
+        const vice = j.p1 > j.p2 ? j.t2 : j.t1;
+        const placarCamp = j.p1 > j.p2 ? j.p1 : j.p2;
+        const placarVice = j.p1 > j.p2 ? j.p2 : j.p1;
+        const dia = extrairDiaJogo(j);
+
+        const card = document.createElement("div");
+        card.className = "card-ouro p-4 rounded-2xl shadow-md flex flex-col justify-between gap-3 relative overflow-hidden";
+
+        card.innerHTML = `
+          <!-- CABEÇALHO COM MODALIDADE E DIA -->
+          <div class="flex justify-between items-center border-b border-amber-200 pb-2">
+            <div>
+              <span class="text-xs font-black uppercase text-amber-900 bg-amber-200/60 px-2.5 py-0.5 rounded-md">${j.modalidade}</span>
+              <span class="text-[11px] font-bold text-amber-800 ml-1.5"><i class="far fa-calendar-alt mr-1"></i>${dia}</span>
+            </div>
+            <span class="text-xs font-black text-amber-700 bg-white/80 px-2 py-0.5 rounded-full border border-amber-300 shadow-xs">OFICIAL</span>
+          </div>
+
+          <!-- PÓDIO (1º E 2º LUGAR) -->
+          <div class="grid grid-cols-2 gap-2 my-1">
+            <!-- 1º LUGAR (CAMPEÃO) -->
+            <div class="bg-white/90 p-3 rounded-xl border-2 border-yellow-400 shadow-sm text-center relative flex flex-col justify-center">
+              <span class="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-yellow-400 text-amber-950 text-[10px] font-black uppercase px-2 py-0.2 rounded-full shadow-xs">
+                🥇 CAMPEÃO
+              </span>
+              <div class="text-xl font-black text-amber-950 mt-1">${campeao}</div>
+              <div class="text-[11px] font-extrabold text-green-600 mt-0.5">${placarCamp} gols/pts na Final</div>
+            </div>
+
+            <!-- 2º LUGAR (VICE) -->
+            <div class="bg-white/60 p-3 rounded-xl border border-gray-300 text-center relative flex flex-col justify-center">
+              <span class="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-gray-300 text-gray-800 text-[10px] font-black uppercase px-2 py-0.2 rounded-full shadow-xs">
+                🥈 VICE
+              </span>
+              <div class="text-lg font-black text-gray-700 mt-1">${vice}</div>
+              <div class="text-[11px] font-semibold text-gray-500 mt-0.5">${placarVice} gols/pts</div>
+            </div>
+          </div>
+
+          <!-- COMPARTILHAR TÍTULO -->
+          <div class="flex justify-between items-center pt-2 border-t border-amber-200 text-xs">
+            <span class="text-[10px] font-bold text-amber-800"><i class="fas fa-trophy mr-1 text-yellow-600"></i>Troféu Consagrado</span>
+            <button onclick="compartilharCampeao('${j.modalidade}', '${campeao}', '${vice}', '${placarCamp}x${placarVice}', '${dia}')"
+                    class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-lg font-bold text-xs flex items-center gap-1.5 shadow-sm transition">
+              <i class="fab fa-whatsapp"></i>
+              <span>Compartilhar Título</span>
+            </button>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function compartilharCampeao(modalidade, campeao, vice, placar, dia) {
+      let texto = `🏆🦈 *É CAMPEÃO NO JIM 2026.2!* 🦈🏆\n\n`;
+      texto += `🥇 *${campeao}* acaba de conquistar o título de *${modalidade}* (${dia})!\n`;
+      texto += `🥈 Vice: ${vice} (Placar da Final: ${placar})\n\n`;
+      texto += `📲 Confira todos os campeões e placares ao vivo:\n`;
+      texto += `https://jim-2026-2.vercel.app/`;
+
+      const urlWhatsApp = `https://api.whatsapp.com/send?text=${encodeURIComponent(texto)}`;
+      window.open(urlWhatsApp, '_blank');
+    }
+
     function compartilharWhatsApp(modalidade, t1, t2, p1, p2, status, horario, local) {
       let texto = `🏆 *JIM 2026.2 — AAAMCTN*\n`;
       texto += `⚽ *${modalidade}*\n\n`;
@@ -359,11 +561,9 @@
       const souTime2 = turmaLocal !== "Todas" && (t2Str === turmaBusca || t2Str.includes(turmaBusca));
       const isMinhaTurma = souTime1 || souTime2;
 
-      // Quem venceu o jogo individualmente
       const time1Venceu = enc && j.p1 > j.p2;
       const time2Venceu = enc && j.p2 > j.p1;
 
-      // CORREÇÃO: A MINHA turma venceu ou perdeu?
       let minhaTurmaVenceu = false;
       let minhaTurmaPerdeu = false;
 
@@ -379,11 +579,11 @@
       if (aoVivo) {
         classDestaque = "border-red-400 bg-red-50";
       } else if (minhaTurmaVenceu) {
-        classDestaque = "vitoria jogo-destaque"; // VERDE
+        classDestaque = "vitoria jogo-destaque";
       } else if (minhaTurmaPerdeu) {
-        classDestaque = "derrota jogo-destaque"; // VERMELHO
+        classDestaque = "derrota jogo-destaque";
       } else if (isMinhaTurma) {
-        classDestaque = "jogo-destaque"; // AMARELO (para jogos futuros)
+        classDestaque = "jogo-destaque";
       }
 
       const card = document.createElement("div");
