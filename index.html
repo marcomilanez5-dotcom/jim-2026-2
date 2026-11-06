@@ -36,6 +36,10 @@
       background: linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%);
       border: 1.5px solid #FCD34D;
     }
+    /* Estilos da árvore de chaveamento */
+    .bracket-round {
+      min-width: 170px;
+    }
   </style>
 </head>
 <body class="bg-gray-100 text-gray-800 pb-16">
@@ -62,17 +66,24 @@
       </div>
     </div>
 
-    <!-- ABAS DE NAVEGAÇÃO SUPERIOR -->
-    <div class="max-w-4xl mx-auto mt-3 flex gap-2">
+    <!-- 3 ABAS DE NAVEGAÇÃO SUPERIOR -->
+    <div class="max-w-4xl mx-auto mt-3 grid grid-cols-3 gap-2 text-center">
       <button id="btnAbaJogos" onclick="trocarAbaPrincipal('jogos')" 
-              class="flex-1 py-2 text-xs sm:text-sm font-bold rounded-lg bg-blue-600 text-white shadow-sm flex items-center justify-center gap-1.5 transition">
+              class="py-2 text-xs sm:text-sm font-bold rounded-lg bg-blue-600 text-white shadow-sm flex items-center justify-center gap-1.5 transition">
         <i class="fas fa-futbol"></i>
-        <span>Jogos & Tabela</span>
+        <span>Jogos</span>
       </button>
+
+      <button id="btnAbaChaveamento" onclick="trocarAbaPrincipal('chaveamento')" 
+              class="py-2 text-xs sm:text-sm font-bold rounded-lg bg-slate-800 text-gray-300 hover:text-white flex items-center justify-center gap-1.5 transition border border-slate-700">
+        <i class="fas fa-sitemap text-emerald-400"></i>
+        <span>Chaves</span>
+      </button>
+
       <button id="btnAbaCampeoes" onclick="trocarAbaPrincipal('campeoes')" 
-              class="flex-1 py-2 text-xs sm:text-sm font-bold rounded-lg bg-slate-800 text-gray-300 hover:text-white flex items-center justify-center gap-1.5 transition border border-slate-700">
+              class="py-2 text-xs sm:text-sm font-bold rounded-lg bg-slate-800 text-gray-300 hover:text-white flex items-center justify-center gap-1.5 transition border border-slate-700">
         <i class="fas fa-crown text-yellow-400"></i>
-        <span>Pódio Oficial</span>
+        <span>Pódio</span>
         <span id="badgeNumCampeoes" class="hidden ml-1 px-1.5 py-0.2 bg-yellow-500 text-slate-900 text-[10px] font-black rounded-full">0</span>
       </button>
     </div>
@@ -162,7 +173,50 @@
     </section>
   </main>
 
-  <!-- ================= ABA 2: GALERIA DE CAMPEÕES & PÓDIO (1º AO 5º) ================= -->
+  <!-- ================= ABA 2: CHAVEAMENTO MATA-MATA (BRACKET) ================= -->
+  <main id="secaoAbaChaveamento" class="max-w-5xl mx-auto p-4 space-y-4 hidden">
+    
+    <div class="bg-gradient-to-r from-emerald-600 to-teal-700 rounded-2xl p-4 sm:p-5 text-white shadow-lg flex items-center justify-between">
+      <div>
+        <h2 class="text-xl font-black flex items-center gap-2">
+          <i class="fas fa-sitemap text-emerald-200 text-xl"></i>
+          <span>Chaveamento Mata-Mata</span>
+        </h2>
+        <p class="text-xs text-emerald-100 mt-0.5">Acompanhe a árvore do torneio das Oitavas até a Grande Final!</p>
+      </div>
+      <span class="text-2xl sm:text-3xl">🌳</span>
+    </div>
+
+    <!-- SELETOR DE MODALIDADE DO CHAVEAMENTO -->
+    <section class="bg-white p-3.5 rounded-xl shadow-sm border border-gray-200">
+      <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Selecione a Modalidade:</label>
+      <select id="selectModalidadeBracket" onchange="renderBracket()" class="w-full p-2 bg-gray-50 border border-gray-300 rounded-lg text-sm font-bold text-gray-800 focus:outline-none focus:border-emerald-500">
+        <option value="Futebol Sete Masc">⚽ Futebol Sete Masc</option>
+        <option value="Futebol Sete Fem">⚽ Futebol Sete Fem</option>
+        <option value="Vôlei Masc">🏐 Vôlei Masc</option>
+        <option value="Vôlei Fem">🏐 Vôlei Fem</option>
+        <option value="Beach Tennis">🎾 Beach Tennis</option>
+        <option value="Tênis Masc">🎾 Tênis Masc</option>
+        <option value="Tênis Fem">🎾 Tênis Fem</option>
+        <option value="Sinuca">🎱 Sinuca</option>
+        <option value="Pebolim">⚽ Pebolim</option>
+        <option value="FIFA">🎮 FIFA</option>
+        <option value="Xadrez">♟️ Xadrez</option>
+        <option value="Truco Gaudério">🃏 Truco Gaudério</option>
+        <option value="Truco Paulista">🃏 Truco Paulista</option>
+        <option value="Jogos Alcoólicos">🍻 Jogos Alcoólicos</option>
+      </select>
+    </section>
+
+    <!-- ÁRVORE VISUAL COM ROLAGEM HORIZONTAL SUAVE NO CELULAR -->
+    <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-200 overflow-x-auto">
+      <div id="bracketTreeContainer" class="flex gap-4 sm:gap-6 min-w-max pb-2">
+        <!-- Preenchido dinamicamente com as colunas de Oitavas, Quartas, Semis e Final -->
+      </div>
+    </div>
+  </main>
+
+  <!-- ================= ABA 3: PÓDIO OFICIAL ================= -->
   <main id="secaoAbaCampeoes" class="max-w-4xl mx-auto p-4 space-y-6 hidden">
     
     <div class="bg-gradient-to-r from-amber-500 to-yellow-600 rounded-2xl p-5 text-white shadow-lg flex items-center justify-between">
@@ -198,22 +252,37 @@
     let turmaLocal = localStorage.getItem('jimTurma') || "Todas";
     let carregando = false;
 
+    // CONTROLE DE NAVEGAÇÃO DAS 3 ABAS PRINCIPAIS
     function trocarAbaPrincipal(aba) {
       const secaoJogos = document.getElementById("secaoAbaJogos");
+      const secaoChaveamento = document.getElementById("secaoAbaChaveamento");
       const secaoCampeoes = document.getElementById("secaoAbaCampeoes");
+      
       const btnJogos = document.getElementById("btnAbaJogos");
+      const btnChaves = document.getElementById("btnAbaChaveamento");
       const btnCampeoes = document.getElementById("btnAbaCampeoes");
+
+      // Esconde todas
+      secaoJogos.classList.add("hidden");
+      secaoChaveamento.classList.add("hidden");
+      secaoCampeoes.classList.add("hidden");
+
+      // Reseta estilo dos botões
+      const estiloInativo = "py-2 text-xs sm:text-sm font-bold rounded-lg bg-slate-800 text-gray-300 hover:text-white flex items-center justify-center gap-1.5 transition border border-slate-700";
+      btnJogos.className = estiloInativo;
+      btnChaves.className = estiloInativo;
+      btnCampeoes.className = estiloInativo;
 
       if (aba === 'jogos') {
         secaoJogos.classList.remove("hidden");
-        secaoCampeoes.classList.add("hidden");
-        btnJogos.className = "flex-1 py-2 text-xs sm:text-sm font-bold rounded-lg bg-blue-600 text-white shadow-sm flex items-center justify-center gap-1.5 transition";
-        btnCampeoes.className = "flex-1 py-2 text-xs sm:text-sm font-bold rounded-lg bg-slate-800 text-gray-300 hover:text-white flex items-center justify-center gap-1.5 transition border border-slate-700";
-      } else {
-        secaoJogos.classList.add("hidden");
+        btnJogos.className = "py-2 text-xs sm:text-sm font-bold rounded-lg bg-blue-600 text-white shadow-sm flex items-center justify-center gap-1.5 transition";
+      } else if (aba === 'chaveamento') {
+        secaoChaveamento.classList.remove("hidden");
+        btnChaves.className = "py-2 text-xs sm:text-sm font-bold rounded-lg bg-emerald-600 text-white shadow-sm flex items-center justify-center gap-1.5 transition";
+        renderBracket();
+      } else if (aba === 'campeoes') {
         secaoCampeoes.classList.remove("hidden");
-        btnCampeoes.className = "flex-1 py-2 text-xs sm:text-sm font-bold rounded-lg bg-yellow-500 text-slate-900 shadow-md flex items-center justify-center gap-1.5 transition";
-        btnJogos.className = "flex-1 py-2 text-xs sm:text-sm font-bold rounded-lg bg-slate-800 text-gray-300 hover:text-white flex items-center justify-center gap-1.5 transition border border-slate-700";
+        btnCampeoes.className = "py-2 text-xs sm:text-sm font-bold rounded-lg bg-yellow-500 text-slate-900 shadow-md flex items-center justify-center gap-1.5 transition";
         renderCampeoes();
       }
     }
@@ -321,6 +390,7 @@
       renderProximosJogos();
       renderJogos();
       renderCampeoes();
+      renderBracket();
     }
 
     function renderProximosJogos() {
@@ -409,6 +479,95 @@
       });
     }
 
+    // ==============================================================
+    // NOVO: RENDERIZAR CHAVEAMENTO MATA-MATA (BRACKET VISUAL)
+    // ==============================================================
+    function renderBracket() {
+      const container = document.getElementById("bracketTreeContainer");
+      const select = document.getElementById("selectModalidadeBracket");
+      if (!container || !select) return;
+
+      const mod = select.value;
+      container.innerHTML = "";
+
+      // Filtra os jogos da modalidade selecionada
+      const jogosMod = jogosData.filter(j => j.modalidade.toLowerCase().replace(/sete/g, "7") === mod.toLowerCase().replace(/sete/g, "7"));
+
+      if (jogosMod.length === 0) {
+        container.innerHTML = `<div class="text-gray-500 text-xs py-8 text-center w-full">Nenhum confronto de mata-mata cadastrado para esta modalidade.</div>`;
+        return;
+      }
+
+      // Separa os jogos por fases
+      const oitavas = jogosMod.filter(j => String(j.fase || "").toLowerCase().includes("oitava"));
+      const quartas = jogosMod.filter(j => String(j.fase || "").toLowerCase().includes("quarta"));
+      const semis = jogosMod.filter(j => String(j.fase || "").toLowerCase().includes("semi"));
+      const final = jogosMod.filter(j => String(j.fase || "").toLowerCase().includes("final"));
+
+      const rodadas = [];
+      if (oitavas.length > 0) rodadas.push({ nome: "Oitavas", jogos: oitavas });
+      if (quartas.length > 0) rodadas.push({ nome: "Quartas", jogos: quartas });
+      if (semis.length > 0) rodadas.push({ nome: "Semifinais", jogos: semis });
+      if (final.length > 0) rodadas.push({ nome: "Grande Final", jogos: final, ehFinal: true });
+
+      rodadas.forEach((rodada, idx) => {
+        const coluna = document.createElement("div");
+        coluna.className = `bracket-round flex flex-col justify-around gap-3 ${rodada.ehFinal ? 'bg-amber-50/50 p-2.5 rounded-2xl border-2 border-yellow-300' : ''}`;
+
+        let htmlJogos = `
+          <div class="text-center pb-1 border-b border-gray-200 mb-1">
+            <span class="text-[11px] font-black uppercase tracking-wider ${rodada.ehFinal ? 'text-amber-800' : 'text-gray-500'}">
+              ${rodada.ehFinal ? '👑 ' : ''}${rodada.nome}
+            </span>
+          </div>
+          <div class="flex flex-col justify-around flex-1 gap-2.5">
+        `;
+
+        rodada.jogos.forEach(j => {
+          const enc = j.status === "Encerrado";
+          const aoVivo = j.status === "Em Andamento" || j.status === "Ao Vivo";
+          const t1Venceu = enc && Number(j.p1) > Number(j.p2);
+          const t2Venceu = enc && Number(j.p2) > Number(j.p1);
+
+          htmlJogos += `
+            <div class="bg-white border ${aoVivo ? 'border-red-400 ring-1 ring-red-400 bg-red-50/20' : (rodada.ehFinal ? 'border-amber-300 shadow-sm' : 'border-gray-200 shadow-xs')} rounded-xl p-2 text-xs">
+              <div class="text-[9px] font-bold text-gray-400 flex justify-between items-center mb-1">
+                <span class="truncate max-w-[90px]">${j.fase || ''}</span>
+                <span class="${aoVivo ? 'text-red-600 font-black animate-pulse' : (enc ? 'text-green-600 font-bold' : 'text-gray-400')}">
+                  ${aoVivo ? 'AO VIVO' : (enc ? 'FIM' : (j.horario || 'Breve'))}
+                </span>
+              </div>
+
+              <!-- TIME 1 -->
+              <div class="flex justify-between items-center py-0.5 px-1 rounded ${t1Venceu ? 'bg-green-100/70 font-black text-green-900' : 'text-gray-700 font-semibold'}">
+                <span class="truncate max-w-[100px] flex items-center gap-1">
+                  ${t1Venceu ? '<i class="fas fa-check text-[10px] text-green-600"></i>' : ''}
+                  ${j.t1}
+                </span>
+                <span class="font-black ${t1Venceu ? 'text-green-700' : 'text-gray-500'}">${enc || aoVivo ? j.p1 : '-'}</span>
+              </div>
+
+              <!-- DIVISOR -->
+              <div class="border-t border-gray-100 my-0.5"></div>
+
+              <!-- TIME 2 -->
+              <div class="flex justify-between items-center py-0.5 px-1 rounded ${t2Venceu ? 'bg-green-100/70 font-black text-green-900' : 'text-gray-700 font-semibold'}">
+                <span class="truncate max-w-[100px] flex items-center gap-1">
+                  ${t2Venceu ? '<i class="fas fa-check text-[10px] text-green-600"></i>' : ''}
+                  ${j.t2}
+                </span>
+                <span class="font-black ${t2Venceu ? 'text-green-700' : 'text-gray-500'}">${enc || aoVivo ? j.p2 : '-'}</span>
+              </div>
+            </div>
+          `;
+        });
+
+        htmlJogos += `</div>`;
+        coluna.innerHTML = htmlJogos;
+        container.appendChild(coluna);
+      });
+    }
+
     function extrairDiaJogo(j) {
       const h = String(j.horario || "").toLowerCase();
       if (h.includes("quinta")) return "Quinta";
@@ -419,7 +578,6 @@
     }
 
     function atualizarBadgeCampeoes() {
-      // Conta finais encerradas ou modalidades cadastradas com colocações
       const total = colocacoesData.length || jogosData.filter(j => String(j.fase || "").toLowerCase().includes("final") && j.status === "Encerrado").length;
       const badge = document.getElementById("badgeNumCampeoes");
       if (total > 0) {
@@ -430,9 +588,6 @@
       }
     }
 
-    // ==============================================================
-    // RENDERIZAR CAMPEÕES & PÓDIO OFICIAL (INCLUINDO ATLETISMO)
-    // ==============================================================
     function renderCampeoes() {
       const container = document.getElementById("containerCampeoes");
       if (!container) return;
@@ -440,12 +595,10 @@
 
       const mapaModalidades = new Map();
 
-      // 1. Pega primeiro todas as modalidades que já estão na tabela oficial de Colocações Finais (Atletismo entra aqui!)
       colocacoesData.forEach(c => {
         if (c.c1) {
-          // Descobre o dia da modalidade buscando nos jogos
           const jogoRef = jogosData.find(j => j.modalidade.toLowerCase().replace(/sete/g, "7") === c.modalidade.toLowerCase().replace(/sete/g, "7"));
-          const dia = jogoRef ? extrairDiaJogo(jogoRef) : "Quinta"; // Atletismo é Quinta-feira!
+          const dia = jogoRef ? extrairDiaJogo(jogoRef) : "Quinta";
 
           const matchDia = (diaCampeoesSelecionado === "Todos" || dia === diaCampeoesSelecionado);
 
@@ -463,7 +616,6 @@
         }
       });
 
-      // 2. Se tiver alguma final encerrada que ainda não foi pro Colocações Finais, monta o card
       jogosData.forEach(j => {
         const ehFinal = String(j.fase || "").toLowerCase().includes("final");
         const enc = j.status === "Encerrado";
@@ -545,7 +697,7 @@
           ${htmlRestoPodio}
 
           <div class="flex justify-between items-center pt-2 border-t border-amber-200 text-xs">
-            <span class="text-[10px] font-bold text-amber-800"><i class="fas fa-trophy mr-1 text-yellow-600"></i>Pontuação Gravada</span>
+            <span class="text-[10px] font-bold text-amber-800"><i class="fas fa-trophy mr-1 text-yellow-600"></i>Pontuação Geral Gravada</span>
             <button onclick="compartilharPodio('${item.modalidade}', '${item.c1}', '${item.c2}', '${item.c3}', '${item.c4}', '${item.c5}')"
                     class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-lg font-bold text-xs flex items-center gap-1.5 shadow-sm transition">
               <i class="fab fa-whatsapp"></i>
@@ -556,6 +708,7 @@
         container.appendChild(card);
       });
     }
+
     function compartilharPodio(modalidade, c1, c2, c3, c4, c5) {
       let texto = `🏆🦈 *PÓDIO OFICIAL — JIM 2026.2!* 🦈🏆\n\n`;
       texto += `🥇 *Campeão:* ${c1} (${modalidade})\n`;
