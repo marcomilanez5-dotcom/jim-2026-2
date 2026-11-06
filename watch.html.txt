@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>JIM Watch</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", sans-serif;
+      background-color: #000000;
+      color: #FFFFFF;
+      margin: 0;
+      padding: 6px;
+      -webkit-font-smoothing: antialiased;
+    }
+    @keyframes pulse-red {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.9); }
+    }
+    .pulse-live { animation: pulse-red 1.2s infinite; }
+  </style>
+</head>
+<body class="pb-10">
+
+  <!-- TOPO COMPACTO DO WATCH -->
+  <div class="flex items-center justify-between border-b border-neutral-800 pb-1 mb-2">
+    <div class="flex items-center gap-1.5">
+      <span class="text-xs font-black text-yellow-400">JIM 26.2</span>
+    </div>
+    <div class="flex items-center gap-1 text-[10px] text-neutral-400">
+      <span id="horaAtual" class="font-bold">--:--</span>
+      <span class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
+    </div>
+  </div>
+
+  <!-- SELETOR DE TURMA COMPACTO (TOUCH-FRIENDLY) -->
+  <div class="mb-3">
+    <select id="selectTurmaWatch" onchange="mudarTurmaWatch(this.value)" 
+            class="w-full bg-neutral-900 text-yellow-300 font-extrabold text-xs py-1.5 px-2 rounded-lg border border-neutral-700 focus:outline-none">
+      <option value="Todas">👀 Todas as Turmas</option>
+      <option value="46">Turma 46</option>
+      <option value="47A">Turma 47A</option>
+      <option value="47B">Turma 47B</option>
+      <option value="47C">Turma 47C</option>
+      <option value="48A">Turma 48A</option>
+      <option value="48B">Turma 48B</option>
+      <option value="48C">Turma 48C</option>
+      <option value="49A">Turma 49A</option>
+      <option value="49B">Turma 49B</option>
+      <option value="49C">Turma 49C</option>
+      <option value="50A">Turma 50A</option>
+      <option value="50B">Turma 50B</option>
+      <option value="50C">Turma 50C</option>
+    </select>
+  </div>
+
+  <!-- 1. JOGOS AO VIVO (EM DESTAQUE NO TOPO) -->
+  <div id="secaoAoVivo" class="mb-3 hidden">
+    <div class="flex items-center gap-1.5 mb-1.5 text-[10px] font-black text-red-500 uppercase tracking-wider">
+      <span class="w-2 h-2 rounded-full bg-red-600 pulse-live"></span>
+      <span>Ao Vivo Agora</span>
+    </div>
+    <div id="cardsAoVivo" class="space-y-1.5"></div>
+  </div>
+
+  <!-- 2. PRÓXIMOS JOGOS DA TURMA -->
+  <div id="secaoProximos" class="mb-3">
+    <div class="flex items-center gap-1.5 mb-1.5 text-[10px] font-black text-blue-400 uppercase tracking-wider">
+      <i class="fas fa-clock text-[9px]"></i>
+      <span id="tituloProximos">Próximos Confrontos</span>
+    </div>
+    <div id="cardsProximos" class="space-y-1.5"></div>
+  </div>
+
+  <!-- 3. ÚLTIMOS RESULTADOS ENCERRADOS -->
+  <div id="secaoEncerrados" class="mb-2">
+    <div class="flex items-center gap-1.5 mb-1.5 text-[10px] font-black text-neutral-400 uppercase tracking-wider">
+      <i class="fas fa-check-circle text-[9px] text-green-500"></i>
+      <span>Resultados</span>
+    </div>
+    <div id="cardsEncerrados" class="space-y-1.5"></div>
+  </div>
+
+  <script>
+    const API_URL = "https://script.google.com/macros/s/AKfycbwltAE6CbhINH_jf3S00QrXg05R_Ubz-eDOmKtY338vBkAf8hf4iJ46o47KGiGF17JM/exec?modo=json";
+    let jogosData = [];
+    let turmaWatch = localStorage.getItem("jimTurma") || "Todas";
+
+    function atualizarRelogio() {
+      const agora = new Date();
+      const h = String(agora.getHours()).padStart(2, '0');
+      const m = String(agora.getMinutes()).padStart(2, '0');
+      document.getElementById("horaAtual").innerText = `${h}:${m}`;
+    }
+
+    function mudarTurmaWatch(novaTurma) {
+      turmaWatch = novaTurma;
+      localStorage.setItem("jimTurma", novaTurma);
+      renderWatch();
+    }
+
+    function obterPesoCronologico(j) {
+      const h = String(j.horario || "").toLowerCase();
+      let pesoDia = 99;
+      if (h.includes("quinta")) pesoDia = 1;
+      else if (h.includes("sexta")) pesoDia = 2;
+      else if (h.includes("sábado") || h.includes("sabado")) pesoDia = 3;
+      else if (h.includes("domingo")) pesoDia = 4;
+
+      const matchHora = h.match(/(\d{1,2}):(\d{2})/);
+      let horaDecimal = 0;
+      if (matchHora) {
+        horaDecimal = parseInt(matchHora[1], 10) + (parseInt(matchHora[2], 10) / 60);
+      }
+      return (pesoDia * 100) + horaDecimal;
+    }
+
+    async function carregarDadosWatch() {
+      try {
+        const resp = await fetch(API_URL, { cache: "no-store" });
+        const data = await resp.json();
+        jogosData = data.jogos || [];
+        renderWatch();
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    function renderWatch() {
+      atualizarRelogio();
+
+      // Ajusta o select
+      const select = document.getElementById("selectTurmaWatch");
+      if (select.value !== turmaWatch) select.value = turmaWatch;
+
+      const containerAoVivo = document.getElementById("cardsAoVivo");
+      const secaoAoVivo = document.getElementById("secaoAoVivo");
+      const containerProximos = document.getElementById("cardsProximos");
+      const containerEncerrados = document.getElementById("cardsEncerrados");
+
+      containerAoVivo.innerHTML = "";
+      containerProximos.innerHTML = "";
+      containerEncerrados.innerHTML = "";
+
+      const turmaBusca = String(turmaWatch).toLowerCase().trim();
+
+      // FILTRO: Jogos Ao Vivo (mostra todos ou prioriza da turma se selecionada)
+      const jogosAoVivo = jogosData.filter(j => {
+        const live = j.status === "Em Andamento" || j.status === "Ao Vivo";
+        if (!live) return false;
+        if (turmaWatch === "Todas") return true;
+        const t1 = String(j.t1).toLowerCase();
+        const t2 = String(j.t2).toLowerCase();
+        return t1.includes(turmaBusca) || t2.includes(turmaBusca);
+      });
+
+      if (jogosAoVivo.length > 0) {
+        secaoAoVivo.classList.remove("hidden");
+        jogosAoVivo.forEach(j => {
+          containerAoVivo.innerHTML += `
+            <div class="bg-neutral-900 border border-red-500/80 rounded-xl p-2 shadow-sm">
+              <div class="flex justify-between items-center text-[9px] text-neutral-400 mb-1">
+                <span class="font-extrabold text-red-400 truncate max-w-[100px]">${j.modalidade}</span>
+                <span class="text-red-500 font-bold uppercase animate-pulse">AO VIVO</span>
+              </div>
+              <div class="flex justify-between items-center text-xs font-black">
+                <span class="truncate max-w-[55px] text-white">${j.t1}</span>
+                <span class="bg-red-950/80 text-red-300 px-2 py-0.5 rounded-md border border-red-700/50 text-sm tracking-widest">${j.p1}x${j.p2}</span>
+                <span class="truncate max-w-[55px] text-white text-right">${j.t2}</span>
+              </div>
+            </div>
+          `;
+        });
+      } else {
+        secaoAoVivo.classList.add("hidden");
+      }
+
+      // FILTRO: Próximos Jogos (ordem cronológica)
+      const proximos = jogosData.filter(j => {
+        const futuro = j.status === "Acontecerá" || j.status === "Em breve";
+        if (!futuro) return false;
+        if (turmaWatch === "Todas") return true;
+        const t1 = String(j.t1).toLowerCase();
+        const t2 = String(j.t2).toLowerCase();
+        return t1.includes(turmaBusca) || t2.includes(turmaBusca);
+      }).sort((a, b) => obterPesoCronologico(a) - obterPesoCronologico(b)).slice(0, 4);
+
+      if (proximos.length > 0) {
+        proximos.forEach(j => {
+          containerProximos.innerHTML += `
+            <div class="bg-neutral-900/90 border border-neutral-800 rounded-xl p-2">
+              <div class="flex justify-between items-center text-[9px] text-neutral-400 mb-1">
+                <span class="font-extrabold text-blue-400 truncate max-w-[95px]">${j.modalidade}</span>
+                <span class="text-yellow-400 font-semibold truncate max-w-[65px] text-right">${j.horario || 'Breve'}</span>
+              </div>
+              <div class="flex justify-between items-center text-xs font-bold text-neutral-200">
+                <span class="truncate max-w-[60px]">${j.t1}</span>
+                <span class="text-[9px] text-neutral-500 font-extrabold">VS</span>
+                <span class="truncate max-w-[60px] text-right">${j.t2}</span>
+              </div>
+            </div>
+          `;
+        });
+      } else {
+        containerProximos.innerHTML = `<div class="text-[10px] text-neutral-500 text-center py-2">Sem jogos futuros.</div>`;
+      }
+
+      // FILTRO: Últimos Encerrados
+      const encerrados = jogosData.filter(j => {
+        if (j.status !== "Encerrado") return false;
+        if (turmaWatch === "Todas") return true;
+        const t1 = String(j.t1).toLowerCase();
+        const t2 = String(j.t2).toLowerCase();
+        return t1.includes(turmaBusca) || t2.includes(turmaBusca);
+      }).slice(-3).reverse();
+
+      if (encerrados.length > 0) {
+        encerrados.forEach(j => {
+          const t1 = String(j.t1).toLowerCase();
+          const souT1 = t1.includes(turmaBusca);
+          const venci = (souT1 && j.p1 > j.p2) || (!souT1 && j.p2 > j.p1);
+          const corPlacar = turmaWatch !== "Todas" ? (venci ? "text-green-400" : "text-red-400") : "text-neutral-300";
+
+          containerEncerrados.innerHTML += `
+            <div class="bg-neutral-900/60 border border-neutral-800 rounded-lg p-1.5 flex justify-between items-center text-[10px]">
+              <span class="truncate max-w-[55px] font-bold text-neutral-300">${j.t1}</span>
+              <span class="font-black ${corPlacar} text-xs px-1">${j.p1}x${j.p2}</span>
+              <span class="truncate max-w-[55px] font-bold text-neutral-300 text-right">${j.t2}</span>
+            </div>
+          `;
+        });
+      }
+    }
+
+    carregarDadosWatch();
+    setInterval(carregarDadosWatch, 10000);
+    setInterval(atualizarRelogio, 1000);
+  </script>
+</body>
+</html>
