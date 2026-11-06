@@ -431,70 +431,74 @@
     }
 
     // ==============================================================
-    // RENDERIZAR CAMPEÕES & PÓDIO (1º AO 5º LUGAR)
+    // RENDERIZAR CAMPEÕES & PÓDIO OFICIAL (INCLUINDO ATLETISMO)
     // ==============================================================
     function renderCampeoes() {
       const container = document.getElementById("containerCampeoes");
       if (!container) return;
       container.innerHTML = "";
 
-      // Modalidades que possuem campeão definido
-      // 1. Tenta pegar da lista oficial de Colocações Finais
-      // 2. Ou gera a partir das finais encerradas
-      const listaFinais = [];
+      const mapaModalidades = new Map();
 
-      // Monta a partir dos jogos de final encerrados
+      // 1. Pega primeiro todas as modalidades que já estão na tabela oficial de Colocações Finais (Atletismo entra aqui!)
+      colocacoesData.forEach(c => {
+        if (c.c1) {
+          // Descobre o dia da modalidade buscando nos jogos
+          const jogoRef = jogosData.find(j => j.modalidade.toLowerCase().replace(/sete/g, "7") === c.modalidade.toLowerCase().replace(/sete/g, "7"));
+          const dia = jogoRef ? extrairDiaJogo(jogoRef) : "Quinta"; // Atletismo é Quinta-feira!
+
+          const matchDia = (diaCampeoesSelecionado === "Todos" || dia === diaCampeoesSelecionado);
+
+          if (matchDia) {
+            mapaModalidades.set(c.modalidade.toLowerCase().replace(/sete/g, "7"), {
+              modalidade: c.modalidade,
+              dia: dia,
+              c1: c.c1,
+              c2: c.c2,
+              c3: c.c3,
+              c4: c.c4,
+              c5: c.c5
+            });
+          }
+        }
+      });
+
+      // 2. Se tiver alguma final encerrada que ainda não foi pro Colocações Finais, monta o card
       jogosData.forEach(j => {
         const ehFinal = String(j.fase || "").toLowerCase().includes("final");
         const enc = j.status === "Encerrado";
         const temVencedor = Number(j.p1) !== Number(j.p2);
 
         if (ehFinal && enc && temVencedor) {
+          const modKey = j.modalidade.toLowerCase().replace(/sete/g, "7");
           const dia = extrairDiaJogo(j);
           const matchDia = (diaCampeoesSelecionado === "Todos" || dia === diaCampeoesSelecionado);
 
-          if (matchDia) {
+          if (matchDia && !mapaModalidades.has(modKey)) {
             const campeao = j.p1 > j.p2 ? j.t1 : j.t2;
             const vice = j.p1 > j.p2 ? j.t2 : j.t1;
 
-            // Busca se na tabela de Colocações Finais tem 3º, 4º e 5º calculados
-            const colOficial = colocacoesData.find(c => c.modalidade.toLowerCase().replace(/sete/g, "7") === j.modalidade.toLowerCase().replace(/sete/g, "7"));
-
-            listaFinais.push({
+            mapaModalidades.set(modKey, {
               modalidade: j.modalidade,
               dia: dia,
-              c1: colOficial ? colOficial.c1 : campeao,
-              c2: colOficial ? colOficial.c2 : vice,
-              c3: colOficial ? colOficial.c3 : "",
-              c4: colOficial ? colOficial.c4 : "",
-              c5: colOficial ? colOficial.c5 : ""
+              c1: campeao,
+              c2: vice,
+              c3: "",
+              c4: "",
+              c5: ""
             });
           }
         }
       });
 
-      // Se tiver modalidades sem jogo de final direta (ex: Atletismo), inclui aqui se tiver colocação
-      colocacoesData.forEach(c => {
-        const jaEstaNaLista = listaFinais.some(f => f.modalidade.toLowerCase().replace(/sete/g, "7") === c.modalidade.toLowerCase().replace(/sete/g, "7"));
-        if (!jaEstaNaLista && c.c1) {
-          listaFinais.push({
-            modalidade: c.modalidade,
-            dia: "Geral",
-            c1: c.c1,
-            c2: c.c2,
-            c3: c.c3,
-            c4: c.c4,
-            c5: c.c5
-          });
-        }
-      });
+      const listaFinais = Array.from(mapaModalidades.values());
 
       if (listaFinais.length === 0) {
         container.innerHTML = `
           <div class="col-span-full bg-white p-8 rounded-2xl border border-gray-200 text-center space-y-2 shadow-sm">
             <div class="text-4xl">⏳</div>
             <h3 class="font-bold text-gray-800 text-base">Nenhum pódio consagrado ainda${diaCampeoesSelecionado !== 'Todos' ? ' para ' + diaCampeoesSelecionado : ''}!</h3>
-            <p class="text-xs text-gray-500">Assim que as partidas finais forem encerradas no painel, as colocações do 1º ao 5º lugar aparecerão aqui.</p>
+            <p class="text-xs text-gray-500">Assim que as provas e finais forem encerradas no painel, as colocações do 1º ao 5º lugar aparecerão aqui.</p>
           </div>
         `;
         return;
@@ -504,26 +508,16 @@
         const card = document.createElement("div");
         card.className = "card-ouro p-4 rounded-2xl shadow-md flex flex-col justify-between gap-3 relative overflow-hidden";
 
-        // Monta os itens do 3º ao 5º lugar (se existirem)
         let htmlRestoPodio = "";
         if (item.c3 || item.c4 || item.c5) {
           htmlRestoPodio = `<div class="bg-white/70 p-2.5 rounded-xl border border-amber-200 grid grid-cols-3 gap-1 text-center mt-1">`;
-          
-          if (item.c3) {
-            htmlRestoPodio += `<div><span class="text-[9px] font-black uppercase text-amber-800 block">🥉 3º Lugar</span><span class="text-xs font-bold text-gray-800 truncate block">${item.c3}</span></div>`;
-          }
-          if (item.c4) {
-            htmlRestoPodio += `<div><span class="text-[9px] font-black uppercase text-gray-500 block">4º Lugar</span><span class="text-xs font-bold text-gray-800 truncate block">${item.c4}</span></div>`;
-          }
-          if (item.c5) {
-            htmlRestoPodio += `<div><span class="text-[9px] font-black uppercase text-gray-500 block">5º Lugar</span><span class="text-xs font-bold text-gray-800 truncate block">${item.c5}</span></div>`;
-          }
-
+          if (item.c3) htmlRestoPodio += `<div><span class="text-[9px] font-black uppercase text-amber-800 block">🥉 3º Lugar</span><span class="text-xs font-bold text-gray-800 truncate block">${item.c3}</span></div>`;
+          if (item.c4) htmlRestoPodio += `<div><span class="text-[9px] font-black uppercase text-gray-500 block">4º Lugar</span><span class="text-xs font-bold text-gray-800 truncate block">${item.c4}</span></div>`;
+          if (item.c5) htmlRestoPodio += `<div><span class="text-[9px] font-black uppercase text-gray-500 block">5º Lugar</span><span class="text-xs font-bold text-gray-800 truncate block">${item.c5}</span></div>`;
           htmlRestoPodio += `</div>`;
         }
 
         card.innerHTML = `
-          <!-- CABEÇALHO COM MODALIDADE E DIA -->
           <div class="flex justify-between items-center border-b border-amber-200 pb-2">
             <div>
               <span class="text-xs font-black uppercase text-amber-900 bg-amber-200/60 px-2.5 py-0.5 rounded-md">${item.modalidade}</span>
@@ -532,9 +526,7 @@
             <span class="text-xs font-black text-amber-700 bg-white/80 px-2 py-0.5 rounded-full border border-amber-300 shadow-xs">PÓDIO OFICIAL</span>
           </div>
 
-          <!-- PÓDIO PRINCIPAL (1º E 2º LUGAR) -->
           <div class="grid grid-cols-2 gap-2 my-1">
-            <!-- 1º LUGAR (CAMPEÃO) -->
             <div class="bg-white/95 p-3 rounded-xl border-2 border-yellow-400 shadow-sm text-center relative flex flex-col justify-center">
               <span class="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-yellow-400 text-amber-950 text-[10px] font-black uppercase px-2 py-0.2 rounded-full shadow-xs">
                 🥇 CAMPEÃO
@@ -542,7 +534,6 @@
               <div class="text-xl font-black text-amber-950 mt-1">${item.c1}</div>
             </div>
 
-            <!-- 2º LUGAR (VICE) -->
             <div class="bg-white/75 p-3 rounded-xl border border-gray-300 text-center relative flex flex-col justify-center">
               <span class="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-gray-300 text-gray-800 text-[10px] font-black uppercase px-2 py-0.2 rounded-full shadow-xs">
                 🥈 VICE
@@ -551,12 +542,10 @@
             </div>
           </div>
 
-          <!-- 3º, 4º E 5º LUGAR -->
           ${htmlRestoPodio}
 
-          <!-- COMPARTILHAR PÓDIO -->
           <div class="flex justify-between items-center pt-2 border-t border-amber-200 text-xs">
-            <span class="text-[10px] font-bold text-amber-800"><i class="fas fa-trophy mr-1 text-yellow-600"></i>Pontuação Geral Gravada</span>
+            <span class="text-[10px] font-bold text-amber-800"><i class="fas fa-trophy mr-1 text-yellow-600"></i>Pontuação Gravada</span>
             <button onclick="compartilharPodio('${item.modalidade}', '${item.c1}', '${item.c2}', '${item.c3}', '${item.c4}', '${item.c5}')"
                     class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-lg font-bold text-xs flex items-center gap-1.5 shadow-sm transition">
               <i class="fab fa-whatsapp"></i>
@@ -567,7 +556,6 @@
         container.appendChild(card);
       });
     }
-
     function compartilharPodio(modalidade, c1, c2, c3, c4, c5) {
       let texto = `🏆🦈 *PÓDIO OFICIAL — JIM 2026.2!* 🦈🏆\n\n`;
       texto += `🥇 *Campeão:* ${c1} (${modalidade})\n`;
