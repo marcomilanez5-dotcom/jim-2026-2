@@ -36,7 +36,7 @@
 </head>
 <body class="bg-gray-100 text-gray-800 pb-12">
 
-  <!-- BANNER DE AVISO DA DIRETORIA (IDEIA 2) -->
+  <!-- BANNER DE AVISO DA DIRETORIA -->
   <div id="bannerAviso" class="hidden bg-amber-400 text-amber-950 px-4 py-2 text-xs sm:text-sm font-bold text-center border-b border-amber-500 shadow-sm flex items-center justify-center gap-2">
     <i class="fas fa-bullhorn text-amber-900 animate-bounce"></i>
     <span id="textoAviso"></span>
@@ -148,15 +148,13 @@
     let turmaLocal = localStorage.getItem('jimTurma') || "Todas";
     let carregando = false;
 
-    // IDEIA 3: DETECTA O DIA ATUAL AUTOMATICAMENTE
     function definirDiaAtualAutomatico() {
       const hoje = new Date().getDay(); 
-      // 4 = Quinta, 5 = Sexta, 6 = Sábado, 0 = Domingo
       if (hoje === 4) diaSelecionado = "Quinta";
       else if (hoje === 5) diaSelecionado = "Sexta";
       else if (hoje === 6) diaSelecionado = "Sábado";
       else if (hoje === 0) diaSelecionado = "Domingo";
-      else diaSelecionado = "Todos"; // Segunda a Quarta mostra tudo
+      else diaSelecionado = "Todos";
 
       atualizarCoresBotoesDia();
     }
@@ -197,7 +195,6 @@
         const data = await resp.json();
         jogosData = data.jogos || [];
 
-        // IDEIA 2: AVISO DA DIRETORIA
         const banner = document.getElementById("bannerAviso");
         const textoAviso = document.getElementById("textoAviso");
         if (data.aviso && data.aviso.trim() !== "") {
@@ -327,7 +324,6 @@
       });
     }
 
-    // IDEIA 1: COMPARTILHAR CONFRONTO NO WHATSAPP
     function compartilharWhatsApp(modalidade, t1, t2, p1, p2, status, horario, local) {
       let texto = `🏆 *JIM 2026.2 — AAAMCTN*\n`;
       texto += `⚽ *${modalidade}*\n\n`;
@@ -354,18 +350,41 @@
     function criarCardJogo(j, isLive) {
       const enc = j.status === 'Encerrado';
       const aoVivo = j.status === 'Em Andamento' || j.status === 'Ao Vivo';
-      const win1 = enc && j.p1 > j.p2;
-      const win2 = enc && j.p2 > j.p1;
+      
       const t1Str = String(j.t1).trim().toLowerCase();
       const t2Str = String(j.t2).trim().toLowerCase();
       const turmaBusca = String(turmaLocal).trim().toLowerCase();
-      const isMinhaTurma = turmaLocal !== "Todas" && (t1Str === turmaBusca || t2Str === turmaBusca || t1Str.includes(turmaBusca) || t2Str.includes(turmaBusca));
+      
+      const souTime1 = turmaLocal !== "Todas" && (t1Str === turmaBusca || t1Str.includes(turmaBusca));
+      const souTime2 = turmaLocal !== "Todas" && (t2Str === turmaBusca || t2Str.includes(turmaBusca));
+      const isMinhaTurma = souTime1 || souTime2;
+
+      // Quem venceu o jogo individualmente
+      const time1Venceu = enc && j.p1 > j.p2;
+      const time2Venceu = enc && j.p2 > j.p1;
+
+      // CORREÇÃO: A MINHA turma venceu ou perdeu?
+      let minhaTurmaVenceu = false;
+      let minhaTurmaPerdeu = false;
+
+      if (isMinhaTurma && enc) {
+        if ((souTime1 && time1Venceu) || (souTime2 && time2Venceu)) {
+          minhaTurmaVenceu = true;
+        } else if ((souTime1 && time2Venceu) || (souTime2 && time1Venceu)) {
+          minhaTurmaPerdeu = true;
+        }
+      }
 
       let classDestaque = "";
-      if (aoVivo) classDestaque = "border-red-400 bg-red-50";
-      else if (isMinhaTurma && enc && win1) classDestaque = "vitoria jogo-destaque";
-      else if (isMinhaTurma && enc && win2) classDestaque = "derrota jogo-destaque";
-      else if (isMinhaTurma) classDestaque = "jogo-destaque";
+      if (aoVivo) {
+        classDestaque = "border-red-400 bg-red-50";
+      } else if (minhaTurmaVenceu) {
+        classDestaque = "vitoria jogo-destaque"; // VERDE
+      } else if (minhaTurmaPerdeu) {
+        classDestaque = "derrota jogo-destaque"; // VERMELHO
+      } else if (isMinhaTurma) {
+        classDestaque = "jogo-destaque"; // AMARELO (para jogos futuros)
+      }
 
       const card = document.createElement("div");
       card.className = `bg-white p-4 rounded-xl shadow-sm border border-gray-200 ${classDestaque}`;
@@ -381,7 +400,7 @@
         <div class="flex justify-between items-center mb-2">
           <span class="text-xs font-bold text-blue-700 bg-blue-50 px-2.5 py-1 rounded-md">${j.modalidade}</span>
           <div class="flex items-center">
-            <span class="text-xs font-semibold ${aoVivo ? 'text-red-600 bg-red-50 px-2 py-0.5 rounded' : (enc ? 'text-green-600 bg-green-50 px-2 py-0.5 rounded' : 'text-amber-600 bg-amber-50 px-2 py-0.5 rounded')}">
+            <span class="text-xs font-semibold ${aoVivo ? 'text-red-600 bg-red-50 px-2 py-0.5 rounded' : (enc ? (j.fase || 'Encerrado') : 'text-amber-600 bg-amber-50 px-2 py-0.5 rounded')}">
               ${aoVivo ? 'AO VIVO' : (enc ? (j.fase || 'Encerrado') : (j.horario || 'Em breve'))}
             </span>
             ${j.local ? `<span class="text-xs text-gray-500 ml-2"><i class="fas fa-map-marker-alt mr-1"></i>${j.local}</span>` : ''}
@@ -390,22 +409,22 @@
         </div>
 
         <div class="flex items-center justify-between bg-gray-50 p-3 rounded-lg mt-2">
-          <div class="w-5/12 text-center font-bold text-sm ${win1 ? 'text-green-700 font-extrabold' : 'text-gray-800'}">
-            ${win1 ? '<i class="fas fa-trophy text-yellow-500 mr-1"></i>' : ''} ${j.t1}
+          <div class="w-5/12 text-center font-bold text-sm ${time1Venceu ? 'text-green-700 font-extrabold' : 'text-gray-800'}">
+            ${time1Venceu ? '<i class="fas fa-trophy text-yellow-500 mr-1"></i>' : ''} ${j.t1}
           </div>
 
           <div class="w-2/12 flex items-center justify-center gap-1.5 font-extrabold text-lg">
-            <span class="${win1 ? 'text-green-600 text-xl' : 'text-gray-700'}">${j.p1}</span>
+            <span class="${time1Venceu ? 'text-green-600 text-xl' : 'text-gray-700'}">${j.p1}</span>
             <span class="text-gray-400 font-normal">x</span>
-            <span class="${win2 ? 'text-green-600 text-xl' : 'text-gray-700'}">${j.p2}</span>
+            <span class="${time2Venceu ? 'text-green-600 text-xl' : 'text-gray-700'}">${j.p2}</span>
           </div>
 
-          <div class="w-5/12 text-center font-bold text-sm ${win2 ? 'text-green-700 font-extrabold' : 'text-gray-800'}">
-            ${j.t2} ${win2 ? '<i class="fas fa-trophy text-yellow-500 ml-1"></i>' : ''}
+          <div class="w-5/12 text-center font-bold text-sm ${time2Venceu ? 'text-green-700 font-extrabold' : 'text-gray-800'}">
+            ${j.t2} ${time2Venceu ? '<i class="fas fa-trophy text-yellow-500 ml-1"></i>' : ''}
           </div>
         </div>
 
-        <!-- BOTÃO COMPARTILHAR WHATSAPP (IDEIA 1) -->
+        <!-- BOTÃO COMPARTILHAR WHATSAPP -->
         <div class="flex justify-end mt-2 pt-2 border-t border-gray-100">
           <button onclick="compartilharWhatsApp('${j.modalidade}', '${j.t1}', '${j.t2}', ${j.p1}, ${j.p2}, '${j.status}', '${j.horario || ''}', '${j.local || ''}')" 
                   class="text-[11px] font-bold text-green-700 hover:text-green-800 bg-green-50 hover:bg-green-100 px-2.5 py-1 rounded-lg transition flex items-center gap-1.5 shadow-sm">
