@@ -197,7 +197,6 @@
     let turmaLocal = localStorage.getItem('jimTurma') || "Todas";
     let carregando = false;
 
-    // CONTROLE DE NAVEGAÇÃO DAS ABAS PRINCIPAIS
     function trocarAbaPrincipal(aba) {
       const secaoJogos = document.getElementById("secaoAbaJogos");
       const secaoCampeoes = document.getElementById("secaoAbaCampeoes");
@@ -408,9 +407,6 @@
       });
     }
 
-    // ==========================================
-    // NOVA FUNÇÃO: RENDERIZAR CAMPEÕES DO DIA
-    // ==========================================
     function extrairDiaJogo(j) {
       const h = String(j.horario || "").toLowerCase();
       if (h.includes("quinta")) return "Quinta";
@@ -438,7 +434,6 @@
       if (!container) return;
       container.innerHTML = "";
 
-      // Filtra jogos que sejam Finais já encerradas com vencedor
       const finaisEncerradas = jogosData.filter(j => {
         const ehFinal = String(j.fase || "").toLowerCase().includes("final");
         const enc = j.status === "Encerrado";
@@ -463,8 +458,6 @@
       finaisEncerradas.forEach(j => {
         const campeao = j.p1 > j.p2 ? j.t1 : j.t2;
         const vice = j.p1 > j.p2 ? j.t2 : j.t1;
-        const placarCamp = j.p1 > j.p2 ? j.p1 : j.p2;
-        const placarVice = j.p1 > j.p2 ? j.p2 : j.p1;
         const dia = extrairDiaJogo(j);
 
         const card = document.createElement("div");
@@ -480,31 +473,29 @@
             <span class="text-xs font-black text-amber-700 bg-white/80 px-2 py-0.5 rounded-full border border-amber-300 shadow-xs">OFICIAL</span>
           </div>
 
-          <!-- PÓDIO (1º E 2º LUGAR) -->
+          <!-- PÓDIO (SEM PONTUAÇÃO EMBAIXO) -->
           <div class="grid grid-cols-2 gap-2 my-1">
             <!-- 1º LUGAR (CAMPEÃO) -->
-            <div class="bg-white/90 p-3 rounded-xl border-2 border-yellow-400 shadow-sm text-center relative flex flex-col justify-center">
+            <div class="bg-white/90 p-3.5 rounded-xl border-2 border-yellow-400 shadow-sm text-center relative flex flex-col justify-center">
               <span class="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-yellow-400 text-amber-950 text-[10px] font-black uppercase px-2 py-0.2 rounded-full shadow-xs">
                 🥇 CAMPEÃO
               </span>
               <div class="text-xl font-black text-amber-950 mt-1">${campeao}</div>
-              <div class="text-[11px] font-extrabold text-green-600 mt-0.5">${placarCamp} gols/pts na Final</div>
             </div>
 
             <!-- 2º LUGAR (VICE) -->
-            <div class="bg-white/60 p-3 rounded-xl border border-gray-300 text-center relative flex flex-col justify-center">
+            <div class="bg-white/60 p-3.5 rounded-xl border border-gray-300 text-center relative flex flex-col justify-center">
               <span class="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-gray-300 text-gray-800 text-[10px] font-black uppercase px-2 py-0.2 rounded-full shadow-xs">
                 🥈 VICE
               </span>
               <div class="text-lg font-black text-gray-700 mt-1">${vice}</div>
-              <div class="text-[11px] font-semibold text-gray-500 mt-0.5">${placarVice} gols/pts</div>
             </div>
           </div>
 
           <!-- COMPARTILHAR TÍTULO -->
           <div class="flex justify-between items-center pt-2 border-t border-amber-200 text-xs">
             <span class="text-[10px] font-bold text-amber-800"><i class="fas fa-trophy mr-1 text-yellow-600"></i>Troféu Consagrado</span>
-            <button onclick="compartilharCampeao('${j.modalidade}', '${campeao}', '${vice}', '${placarCamp}x${placarVice}', '${dia}')"
+            <button onclick="compartilharCampeao('${j.modalidade}', '${campeao}', '${vice}', '${dia}')"
                     class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-lg font-bold text-xs flex items-center gap-1.5 shadow-sm transition">
               <i class="fab fa-whatsapp"></i>
               <span>Compartilhar Título</span>
@@ -515,10 +506,10 @@
       });
     }
 
-    function compartilharCampeao(modalidade, campeao, vice, placar, dia) {
+    function compartilharCampeao(modalidade, campeao, vice, dia) {
       let texto = `🏆🦈 *É CAMPEÃO NO JIM 2026.2!* 🦈🏆\n\n`;
       texto += `🥇 *${campeao}* acaba de conquistar o título de *${modalidade}* (${dia})!\n`;
-      texto += `🥈 Vice: ${vice} (Placar da Final: ${placar})\n\n`;
+      texto += `🥈 Vice: ${vice}\n\n`;
       texto += `📲 Confira todos os campeões e placares ao vivo:\n`;
       texto += `https://jim-2026-2.vercel.app/`;
 
