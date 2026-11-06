@@ -56,11 +56,9 @@
           <p class="text-xs text-gray-400">Acompanhamento Ao Vivo</p>
         </div>
       </div>
-            <div class="flex items-center gap-2.5">
-        <div class="text-right text-xs text-gray-300 flex items-center gap-1.5">
-          <span class="hidden sm:inline">🔄 Ao Vivo</span>
-          <i class="fas fa-sync-alt fa-spin text-blue-400"></i>
-        </div>
+      <div class="text-right text-xs text-gray-300 flex items-center gap-2">
+        <span class="hidden sm:inline">🔄 Ao Vivo</span>
+        <i class="fas fa-sync-alt fa-spin text-blue-400"></i>
       </div>
     </div>
 
@@ -74,7 +72,7 @@
       <button id="btnAbaCampeoes" onclick="trocarAbaPrincipal('campeoes')" 
               class="flex-1 py-2 text-xs sm:text-sm font-bold rounded-lg bg-slate-800 text-gray-300 hover:text-white flex items-center justify-center gap-1.5 transition border border-slate-700">
         <i class="fas fa-crown text-yellow-400"></i>
-        <span>Campeões do Dia</span>
+        <span>Pódio & Campeões</span>
         <span id="badgeNumCampeoes" class="hidden ml-1 px-1.5 py-0.2 bg-yellow-500 text-slate-900 text-[10px] font-black rounded-full">0</span>
       </button>
     </div>
@@ -164,36 +162,37 @@
     </section>
   </main>
 
-  <!-- ================= ABA 2: GALERIA DE CAMPEÕES DO DIA ================= -->
+  <!-- ================= ABA 2: GALERIA DE CAMPEÕES & PÓDIO (1º AO 5º) ================= -->
   <main id="secaoAbaCampeoes" class="max-w-4xl mx-auto p-4 space-y-6 hidden">
     
     <div class="bg-gradient-to-r from-amber-500 to-yellow-600 rounded-2xl p-5 text-white shadow-lg flex items-center justify-between">
       <div>
         <h2 class="text-xl font-black flex items-center gap-2">
           <i class="fas fa-medal text-yellow-200 text-2xl"></i>
-          <span>Galeria de Campeões</span>
+          <span>Pódio Oficial & Campeões</span>
         </h2>
-        <p class="text-xs text-yellow-100 mt-0.5">Modalidades encerradas e os detentores dos troféus do JIM 2026.2!</p>
+        <p class="text-xs text-yellow-100 mt-0.5">Classificação do 1º ao 5º lugar das modalidades já finalizadas!</p>
       </div>
       <span class="text-3xl">🏆</span>
     </div>
 
     <!-- SELETOR DE DIA DOS CAMPEÕES -->
     <div class="flex flex-wrap gap-2">
-      <button onclick="setDiaCampeoes('Todos')" id="btnCampTodos" class="btn-camp px-3 py-1.5 text-xs font-bold rounded-lg bg-blue-600 text-white shadow-sm">Todos os Dias</button>
+      <button onclick="setDiaCampeoes('Todos')" id="btnCampTodos" class="btn-camp px-3 py-1.5 text-xs font-bold rounded-lg bg-blue-600 text-white shadow-sm">Todas as Modalidades</button>
       <button onclick="setDiaCampeoes('Quinta')" id="btnCampQuinta" class="btn-camp px-3 py-1.5 text-xs font-bold rounded-lg bg-white border text-gray-700 hover:bg-gray-50">Quinta</button>
       <button onclick="setDiaCampeoes('Sexta')" id="btnCampSexta" class="btn-camp px-3 py-1.5 text-xs font-bold rounded-lg bg-white border text-gray-700 hover:bg-gray-50">Sexta</button>
       <button onclick="setDiaCampeoes('Sábado')" id="btnCampSabado" class="btn-camp px-3 py-1.5 text-xs font-bold rounded-lg bg-white border text-gray-700 hover:bg-gray-50">Sábado</button>
       <button onclick="setDiaCampeoes('Domingo')" id="btnCampDomingo" class="btn-camp px-3 py-1.5 text-xs font-bold rounded-lg bg-white border text-gray-700 hover:bg-gray-50">Domingo</button>
     </div>
 
-    <!-- LISTA DE CARDS DE CAMPEÕES -->
+    <!-- LISTA DE CARDS DE PÓDIO (1º AO 5º) -->
     <div id="containerCampeoes" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
   </main>
 
   <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbwltAE6CbhINH_jf3S00QrXg05R_Ubz-eDOmKtY338vBkAf8hf4iJ46o47KGiGF17JM/exec?modo=json";
     let jogosData = [];
+    let colocacoesData = [];
     let diaSelecionado = "Todos";
     let diaCampeoesSelecionado = "Todos";
     let turmaLocal = localStorage.getItem('jimTurma') || "Todas";
@@ -243,7 +242,7 @@
     function setDiaCampeoes(dia) {
       diaCampeoesSelecionado = dia;
       document.querySelectorAll(".btn-camp").forEach(btn => {
-        if (btn.innerText.includes(dia) || (dia === "Todos" && btn.innerText.includes("Todos"))) {
+        if (btn.innerText.includes(dia) || (dia === "Todos" && btn.innerText.includes("Todas"))) {
           btn.className = "btn-camp px-3 py-1.5 text-xs font-bold rounded-lg bg-blue-600 text-white shadow-sm";
         } else {
           btn.className = "btn-camp px-3 py-1.5 text-xs font-bold rounded-lg bg-white border text-gray-700 hover:bg-gray-50";
@@ -277,6 +276,7 @@
         const resp = await fetch(API_URL, { cache: "no-store" });
         const data = await resp.json();
         jogosData = data.jogos || [];
+        colocacoesData = data.colocacoes || [];
 
         const banner = document.getElementById("bannerAviso");
         const textoAviso = document.getElementById("textoAviso");
@@ -419,88 +419,148 @@
     }
 
     function atualizarBadgeCampeoes() {
-      const finaisEncerradas = jogosData.filter(j => 
-        String(j.fase || "").toLowerCase().includes("final") && j.status === "Encerrado" && (j.p1 !== j.p2)
-      );
+      // Conta finais encerradas ou modalidades cadastradas com colocações
+      const total = colocacoesData.length || jogosData.filter(j => String(j.fase || "").toLowerCase().includes("final") && j.status === "Encerrado").length;
       const badge = document.getElementById("badgeNumCampeoes");
-      if (finaisEncerradas.length > 0) {
-        badge.innerText = finaisEncerradas.length;
+      if (total > 0) {
+        badge.innerText = total;
         badge.classList.remove("hidden");
       } else {
         badge.classList.add("hidden");
       }
     }
 
+    // ==============================================================
+    // RENDERIZAR CAMPEÕES & PÓDIO (1º AO 5º LUGAR)
+    // ==============================================================
     function renderCampeoes() {
       const container = document.getElementById("containerCampeoes");
       if (!container) return;
       container.innerHTML = "";
 
-      const finaisEncerradas = jogosData.filter(j => {
+      // Modalidades que possuem campeão definido
+      // 1. Tenta pegar da lista oficial de Colocações Finais
+      // 2. Ou gera a partir das finais encerradas
+      const listaFinais = [];
+
+      // Monta a partir dos jogos de final encerrados
+      jogosData.forEach(j => {
         const ehFinal = String(j.fase || "").toLowerCase().includes("final");
         const enc = j.status === "Encerrado";
         const temVencedor = Number(j.p1) !== Number(j.p2);
-        const dia = extrairDiaJogo(j);
-        const matchDia = (diaCampeoesSelecionado === "Todos" || dia === diaCampeoesSelecionado);
 
-        return ehFinal && enc && temVencedor && matchDia;
+        if (ehFinal && enc && temVencedor) {
+          const dia = extrairDiaJogo(j);
+          const matchDia = (diaCampeoesSelecionado === "Todos" || dia === diaCampeoesSelecionado);
+
+          if (matchDia) {
+            const campeao = j.p1 > j.p2 ? j.t1 : j.t2;
+            const vice = j.p1 > j.p2 ? j.t2 : j.t1;
+
+            // Busca se na tabela de Colocações Finais tem 3º, 4º e 5º calculados
+            const colOficial = colocacoesData.find(c => c.modalidade.toLowerCase().replace(/sete/g, "7") === j.modalidade.toLowerCase().replace(/sete/g, "7"));
+
+            listaFinais.push({
+              modalidade: j.modalidade,
+              dia: dia,
+              c1: colOficial ? colOficial.c1 : campeao,
+              c2: colOficial ? colOficial.c2 : vice,
+              c3: colOficial ? colOficial.c3 : "",
+              c4: colOficial ? colOficial.c4 : "",
+              c5: colOficial ? colOficial.c5 : ""
+            });
+          }
+        }
       });
 
-      if (finaisEncerradas.length === 0) {
+      // Se tiver modalidades sem jogo de final direta (ex: Atletismo), inclui aqui se tiver colocação
+      colocacoesData.forEach(c => {
+        const jaEstaNaLista = listaFinais.some(f => f.modalidade.toLowerCase().replace(/sete/g, "7") === c.modalidade.toLowerCase().replace(/sete/g, "7"));
+        if (!jaEstaNaLista && c.c1) {
+          listaFinais.push({
+            modalidade: c.modalidade,
+            dia: "Geral",
+            c1: c.c1,
+            c2: c.c2,
+            c3: c.c3,
+            c4: c.c4,
+            c5: c.c5
+          });
+        }
+      });
+
+      if (listaFinais.length === 0) {
         container.innerHTML = `
           <div class="col-span-full bg-white p-8 rounded-2xl border border-gray-200 text-center space-y-2 shadow-sm">
             <div class="text-4xl">⏳</div>
-            <h3 class="font-bold text-gray-800 text-base">Nenhum campeão consagrado ainda${diaCampeoesSelecionado !== 'Todos' ? ' para ' + diaCampeoesSelecionado : ''}!</h3>
-            <p class="text-xs text-gray-500">Assim que as partidas finais forem encerradas no painel, os títulos aparecerão aqui automaticamente.</p>
+            <h3 class="font-bold text-gray-800 text-base">Nenhum pódio consagrado ainda${diaCampeoesSelecionado !== 'Todos' ? ' para ' + diaCampeoesSelecionado : ''}!</h3>
+            <p class="text-xs text-gray-500">Assim que as partidas finais forem encerradas no painel, as colocações do 1º ao 5º lugar aparecerão aqui.</p>
           </div>
         `;
         return;
       }
 
-      finaisEncerradas.forEach(j => {
-        const campeao = j.p1 > j.p2 ? j.t1 : j.t2;
-        const vice = j.p1 > j.p2 ? j.t2 : j.t1;
-        const dia = extrairDiaJogo(j);
-
+      listaFinais.forEach(item => {
         const card = document.createElement("div");
         card.className = "card-ouro p-4 rounded-2xl shadow-md flex flex-col justify-between gap-3 relative overflow-hidden";
+
+        // Monta os itens do 3º ao 5º lugar (se existirem)
+        let htmlRestoPodio = "";
+        if (item.c3 || item.c4 || item.c5) {
+          htmlRestoPodio = `<div class="bg-white/70 p-2.5 rounded-xl border border-amber-200 grid grid-cols-3 gap-1 text-center mt-1">`;
+          
+          if (item.c3) {
+            htmlRestoPodio += `<div><span class="text-[9px] font-black uppercase text-amber-800 block">🥉 3º Lugar</span><span class="text-xs font-bold text-gray-800 truncate block">${item.c3}</span></div>`;
+          }
+          if (item.c4) {
+            htmlRestoPodio += `<div><span class="text-[9px] font-black uppercase text-gray-500 block">4º Lugar</span><span class="text-xs font-bold text-gray-800 truncate block">${item.c4}</span></div>`;
+          }
+          if (item.c5) {
+            htmlRestoPodio += `<div><span class="text-[9px] font-black uppercase text-gray-500 block">5º Lugar</span><span class="text-xs font-bold text-gray-800 truncate block">${item.c5}</span></div>`;
+          }
+
+          htmlRestoPodio += `</div>`;
+        }
 
         card.innerHTML = `
           <!-- CABEÇALHO COM MODALIDADE E DIA -->
           <div class="flex justify-between items-center border-b border-amber-200 pb-2">
             <div>
-              <span class="text-xs font-black uppercase text-amber-900 bg-amber-200/60 px-2.5 py-0.5 rounded-md">${j.modalidade}</span>
-              <span class="text-[11px] font-bold text-amber-800 ml-1.5"><i class="far fa-calendar-alt mr-1"></i>${dia}</span>
+              <span class="text-xs font-black uppercase text-amber-900 bg-amber-200/60 px-2.5 py-0.5 rounded-md">${item.modalidade}</span>
+              <span class="text-[11px] font-bold text-amber-800 ml-1.5"><i class="far fa-calendar-alt mr-1"></i>${item.dia}</span>
             </div>
-            <span class="text-xs font-black text-amber-700 bg-white/80 px-2 py-0.5 rounded-full border border-amber-300 shadow-xs">OFICIAL</span>
+            <span class="text-xs font-black text-amber-700 bg-white/80 px-2 py-0.5 rounded-full border border-amber-300 shadow-xs">PÓDIO OFICIAL</span>
           </div>
 
-          <!-- PÓDIO (SEM PONTUAÇÃO EMBAIXO) -->
+          <!-- PÓDIO PRINCIPAL (1º E 2º LUGAR) -->
           <div class="grid grid-cols-2 gap-2 my-1">
             <!-- 1º LUGAR (CAMPEÃO) -->
-            <div class="bg-white/90 p-3.5 rounded-xl border-2 border-yellow-400 shadow-sm text-center relative flex flex-col justify-center">
+            <div class="bg-white/95 p-3 rounded-xl border-2 border-yellow-400 shadow-sm text-center relative flex flex-col justify-center">
               <span class="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-yellow-400 text-amber-950 text-[10px] font-black uppercase px-2 py-0.2 rounded-full shadow-xs">
                 🥇 CAMPEÃO
               </span>
-              <div class="text-xl font-black text-amber-950 mt-1">${campeao}</div>
+              <div class="text-xl font-black text-amber-950 mt-1">${item.c1}</div>
             </div>
 
             <!-- 2º LUGAR (VICE) -->
-            <div class="bg-white/60 p-3.5 rounded-xl border border-gray-300 text-center relative flex flex-col justify-center">
+            <div class="bg-white/75 p-3 rounded-xl border border-gray-300 text-center relative flex flex-col justify-center">
               <span class="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-gray-300 text-gray-800 text-[10px] font-black uppercase px-2 py-0.2 rounded-full shadow-xs">
                 🥈 VICE
               </span>
-              <div class="text-lg font-black text-gray-700 mt-1">${vice}</div>
+              <div class="text-lg font-black text-gray-700 mt-1">${item.c2}</div>
             </div>
           </div>
 
-          <!-- COMPARTILHAR TÍTULO -->
+          <!-- 3º, 4º E 5º LUGAR -->
+          ${htmlRestoPodio}
+
+          <!-- COMPARTILHAR PÓDIO -->
           <div class="flex justify-between items-center pt-2 border-t border-amber-200 text-xs">
-            <span class="text-[10px] font-bold text-amber-800"><i class="fas fa-trophy mr-1 text-yellow-600"></i>Troféu Consagrado</span>
-            <button onclick="compartilharCampeao('${j.modalidade}', '${campeao}', '${vice}', '${dia}')"
+            <span class="text-[10px] font-bold text-amber-800"><i class="fas fa-trophy mr-1 text-yellow-600"></i>Pontuação Geral Gravada</span>
+            <button onclick="compartilharPodio('${item.modalidade}', '${item.c1}', '${item.c2}', '${item.c3}', '${item.c4}', '${item.c5}')"
                     class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-lg font-bold text-xs flex items-center gap-1.5 shadow-sm transition">
               <i class="fab fa-whatsapp"></i>
-              <span>Compartilhar Título</span>
+              <span>Compartilhar Pódio</span>
             </button>
           </div>
         `;
@@ -508,11 +568,14 @@
       });
     }
 
-    function compartilharCampeao(modalidade, campeao, vice, dia) {
-      let texto = `🏆🦈 *É CAMPEÃO NO JIM 2026.2!* 🦈🏆\n\n`;
-      texto += `🥇 *${campeao}* acaba de conquistar o título de *${modalidade}* (${dia})!\n`;
-      texto += `🥈 Vice: ${vice}\n\n`;
-      texto += `📲 Confira todos os campeões e placares ao vivo:\n`;
+    function compartilharPodio(modalidade, c1, c2, c3, c4, c5) {
+      let texto = `🏆🦈 *PÓDIO OFICIAL — JIM 2026.2!* 🦈🏆\n\n`;
+      texto += `🥇 *Campeão:* ${c1} (${modalidade})\n`;
+      texto += `🥈 *Vice:* ${c2}\n`;
+      if (c3) texto += `🥉 *3º Lugar:* ${c3}\n`;
+      if (c4) texto += `🎖️ *4º Lugar:* ${c4}\n`;
+      if (c5) texto += `🎖️ *5º Lugar:* ${c5}\n`;
+      texto += `\n📲 Confira a classificação geral ao vivo:\n`;
       texto += `https://jim-2026-2.vercel.app/`;
 
       const urlWhatsApp = `https://api.whatsapp.com/send?text=${encodeURIComponent(texto)}`;
