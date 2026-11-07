@@ -3,79 +3,109 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>JIM 2026.2 — Placar do Bar</title>
+  <title>JIM 2026.2 — Placar de Consumo (Balada)</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,800;0,900;1,900&family=Inter:wght@700;800;900&display=swap" rel="stylesheet">
   <style>
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background-color: #050814;
+      font-family: 'Montserrat', sans-serif;
+      background-color: #03050C;
       color: #FFFFFF;
-      overflow-x: hidden;
+      margin: 0;
+      padding: 0;
+      overflow: hidden; /* Controlado via auto-scroll suave */
     }
     .neon-gold {
-      text-shadow: 0 0 15px rgba(245, 158, 11, 0.6);
+      text-shadow: 0 0 25px rgba(245, 158, 11, 0.9), 0 0 50px rgba(245, 158, 11, 0.5);
     }
-    .linha-lider {
-      background: linear-gradient(90deg, rgba(245, 158, 11, 0.25) 0%, rgba(245, 158, 11, 0.05) 100%);
-      border: 2px solid #F59E0B;
+    .neon-glow-red {
+      text-shadow: 0 0 20px rgba(239, 68, 68, 0.8);
+    }
+    /* Card do Líder Absoluto */
+    .card-lider-balada {
+      background: linear-gradient(135deg, rgba(245, 158, 11, 0.35) 0%, rgba(20, 16, 5, 0.95) 100%);
+      border: 2.5px solid #F59E0B;
+      box-shadow: 0 0 40px rgba(245, 158, 11, 0.45);
+    }
+    .linha-balada {
+      background: rgba(15, 23, 42, 0.85);
+      border: 1.5px solid rgba(51, 65, 85, 0.7);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+    }
+    /* Efeito quando uma turma acabou de pontuar */
+    @keyframes flash-compra {
+      0%, 100% { border-color: rgba(51, 65, 85, 0.7); }
+      50% { border-color: #22C55E; box-shadow: 0 0 35px rgba(34, 197, 94, 0.8); transform: scale(1.02); }
+    }
+    .venda-recente {
+      animation: flash-compra 1.5s 3 ease-in-out;
+    }
+    /* Animação da coroa */
+    @keyframes float-crown {
+      0%, 100% { transform: translateY(0) rotate(0deg); }
+      50% { transform: translateY(-4px) rotate(-3deg); }
+    }
+    .anim-coroa {
+      display: inline-block;
+      animation: float-crown 2s infinite ease-in-out;
     }
   </style>
 </head>
-<body class="min-h-screen p-4 sm:p-6 flex flex-col justify-between max-w-5xl mx-auto">
+<body class="h-screen w-screen flex flex-col justify-between box-border p-4 md:p-6">
 
-  <!-- CABEÇALHO DA TV -->
-  <header class="flex justify-between items-center border-b border-neutral-800 pb-3 mb-4">
+  <!-- CABEÇALHO IMPONENTE ESTILO FESTIVAL -->
+  <header class="max-w-4xl w-full mx-auto flex justify-between items-center border-b border-neutral-800 pb-3">
     <div class="flex items-center gap-3">
-      <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-500 to-yellow-300 text-slate-950 flex items-center justify-center text-2xl font-black shadow-lg">
-        <i class="fas fa-beer"></i>
+      <div class="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-gradient-to-tr from-amber-500 to-yellow-300 text-slate-950 flex items-center justify-center text-2xl md:text-3xl font-black shadow-xl">
+        <i class="fas fa-glass-cheers"></i>
       </div>
       <div>
-        <h1 class="text-xl sm:text-2xl font-black tracking-wider text-amber-400 neon-gold">
-          TROFÉU ETÍLICO — JIM 2026.2
+        <h1 class="text-xl md:text-3xl font-black tracking-wider text-amber-400 neon-gold leading-none uppercase">
+          DISPUTA DO BAR — JIM 2026.2
         </h1>
-        <p class="text-xs text-neutral-400 font-bold uppercase tracking-widest">
-          Classificação Oficial de Consumo no Bar
+        <p class="text-[11px] md:text-xs text-neutral-400 font-bold uppercase tracking-widest mt-1">
+          AAAMCTN • Placar Oficial de Guerra de Salas
         </p>
       </div>
     </div>
 
-    <!-- RELÓGIO & STATUS -->
+    <!-- RELÓGIO & STATUS AO VIVO -->
     <div class="text-right">
-      <span id="relogioTv" class="text-xl font-black text-white block leading-none">--:--</span>
-      <span class="text-[10px] text-green-400 font-bold uppercase tracking-widest flex items-center gap-1 justify-end mt-1">
-        <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-        AO VIVO
+      <span id="relogioTv" class="text-2xl md:text-3xl font-black text-white block leading-none font-mono">--:--:--</span>
+      <span class="text-[11px] text-red-500 font-black uppercase tracking-widest flex items-center gap-1.5 justify-end mt-1 neon-glow-red">
+        <span class="w-2.5 h-2.5 rounded-full bg-red-600 animate-ping"></span>
+        RANKING AO VIVO
       </span>
     </div>
   </header>
 
-  <!-- LISTA DE CLASSIFICAÇÃO (TABELA VERTICAL) -->
-  <main class="flex-1 space-y-2">
+  <!-- CONTAINER DA COLUNA ÚNICA COM SCROLL SUAVE AUTOMÁTICO -->
+  <main class="flex-1 w-full max-w-4xl mx-auto my-3 overflow-hidden relative">
     
-    <!-- CABEÇALHO DA LISTA -->
-    <div class="grid grid-cols-12 gap-2 px-4 py-2 text-[11px] font-black uppercase tracking-wider text-neutral-400 border-b border-neutral-800">
-      <div class="col-span-2 sm:col-span-1 text-center">POS</div>
-      <div class="col-span-5 sm:col-span-6">TURMA</div>
-      <div class="col-span-2 text-center hidden sm:block">COMBOS</div>
-      <div class="col-span-5 sm:col-span-3 text-right">PONTUAÇÃO</div>
-    </div>
-
-    <!-- CONTAINER DAS LINHAS -->
-    <div id="listaRankingBar" class="space-y-2">
+    <!-- ÁREA QUE DESLIZA SUAVEMENTE DE CIMA A BAIXO -->
+    <div id="scrollWrapper" class="space-y-2.5 transition-transform duration-1000 ease-linear">
       <!-- Preenchido via JavaScript -->
     </div>
 
   </main>
 
-  <!-- RODAPÉ DISCRETO -->
-  <footer class="mt-4 pt-3 border-t border-neutral-800/80 flex justify-between items-center text-xs text-neutral-500 font-semibold">
-    <span>Atualização automática a cada 8s</span>
-    <span>AAAMCTN • Beba com moderação</span>
+  <!-- RODAPÉ DE BALADA COM ÚLTIMO COMPRADOR -->
+  <footer class="max-w-4xl w-full mx-auto border-t border-neutral-800/80 pt-2.5 flex justify-between items-center text-xs">
+    <div class="flex items-center gap-2 text-amber-400 font-black">
+      <i class="fas fa-fire-alt text-amber-500 animate-bounce"></i>
+      <span class="text-neutral-400 uppercase text-[11px]">Última pontuação:</span>
+      <span id="textoUltimaCompra" class="text-white font-extrabold truncate max-w-md">Aguardando pedidos no caixa...</span>
+    </div>
+    <span class="text-neutral-500 text-[11px] uppercase font-bold tracking-wider">
+      Quem bebe mais, pontua mais! 🍻
+    </span>
   </footer>
 
   <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbwltAE6CbhINH_jf3S00QrXg05R_Ubz-eDOmKtY338vBkAf8hf4iJ46o47KGiGF17JM/exec?modo=json";
+    let rankingAnterior = {};
+    let listaAtual = [];
 
     function atualizarRelogio() {
       const agora = new Date();
@@ -89,18 +119,18 @@
       try {
         const resp = await fetch(API_URL, { cache: "no-store" });
         const data = await resp.json();
-        const lista = data.rankingBar || [];
-        renderizarListaBar(lista);
+        listaAtual = data.rankingBar || [];
+        renderizarListaBalada(listaAtual);
       } catch (err) {
         console.error("Erro no telão:", err);
       }
     }
 
-    function renderizarListaBar(lista) {
-      const container = document.getElementById("listaRankingBar");
+    function renderizarListaBalada(lista) {
+      const wrapper = document.getElementById("scrollWrapper");
       if (!lista || lista.length === 0) return;
 
-      container.innerHTML = "";
+      wrapper.innerHTML = "";
 
       lista.forEach((r, idx) => {
         const posicao = idx + 1;
@@ -108,60 +138,113 @@
         const ehSegundo = (posicao === 2);
         const ehTerceiro = (posicao === 3);
 
-        // Estilos e Medalhas
-        let estiloLinha = "bg-neutral-900/70 border border-neutral-800";
+        // Checa se os pontos subiram nesta rodada para fazer piscar
+        const pontosAntes = rankingAnterior[r.turma] || 0;
+        const subiuPontos = (r.pontos > pontosAntes && pontosAntes > 0);
+
+        let estiloCard = "linha-balada";
         let iconePos = `${posicao}º`;
+        let corNomeTurma = "text-white";
         let corPontos = "text-amber-400";
-        let corTurma = "text-white";
+        let paddingCard = "py-2.5 px-4";
 
         if (ehLider) {
-          estiloLinha = "linha-lider shadow-lg";
-          iconePos = "👑 1º";
-          corPontos = "text-yellow-400 font-black text-xl sm:text-2xl";
-          corTurma = "text-yellow-300 font-black text-lg sm:text-xl";
+          estiloCard = "card-lider-balada";
+          iconePos = `<span class="anim-coroa text-yellow-300 text-xl md:text-2xl mr-1">👑</span> 1º`;
+          corNomeTurma = "text-yellow-300 font-black text-xl md:text-2xl neon-gold";
+          corPontos = "text-yellow-400 font-black text-2xl md:text-4xl neon-gold";
+          paddingCard = "py-3.5 px-5";
         } else if (ehSegundo) {
-          estiloLinha = "bg-neutral-900/90 border border-slate-500/50";
+          estiloCard = "linha-balada border-slate-400/80 bg-slate-900/90";
           iconePos = "🥈 2º";
-          corPontos = "text-slate-200 font-black text-lg sm:text-xl";
+          corNomeTurma = "text-slate-200 font-black text-lg md:text-xl";
+          corPontos = "text-slate-200 font-black text-xl md:text-3xl";
         } else if (ehTerceiro) {
-          estiloLinha = "bg-neutral-900/80 border border-amber-800/50";
+          estiloCard = "linha-balada border-amber-800/80 bg-amber-950/20";
           iconePos = "🥉 3º";
-          corPontos = "text-amber-500 font-black text-lg sm:text-xl";
+          corNomeTurma = "text-amber-100 font-black text-lg md:text-xl";
+          corPontos = "text-amber-500 font-black text-xl md:text-3xl";
         }
 
-        container.innerHTML += `
-          <div class="grid grid-cols-12 gap-2 items-center px-4 py-3 rounded-2xl ${estiloLinha} transition-all">
-            <!-- POSIÇÃO -->
-            <div class="col-span-2 sm:col-span-1 text-center font-black text-sm sm:text-base text-neutral-300">
+        const div = document.createElement("div");
+        div.className = `${estiloCard} ${paddingCard} rounded-2xl flex items-center justify-between ${subiuPontos ? 'venda-recente' : ''} transition-all`;
+
+        div.innerHTML = `
+          <!-- POSIÇÃO & NOME DA TURMA -->
+          <div class="flex items-center gap-3 md:gap-4 min-w-0">
+            <span class="font-black text-base md:text-xl w-14 text-center text-slate-300 flex items-center justify-center">
               ${iconePos}
+            </span>
+            <div>
+              <span class="${corNomeTurma} tracking-wider block">
+                Turma ${r.turma}
+              </span>
+              ${ehLider ? '<span class="text-[10px] font-extrabold uppercase text-amber-300 tracking-widest block -mt-0.5">Líder Absoluto do Bar</span>' : ''}
+            </div>
+          </div>
+
+          <!-- DETALHES & PONTUAÇÃO GIGANTE -->
+          <div class="flex items-center gap-4 md:gap-8 text-right whitespace-nowrap">
+            <div class="hidden sm:block text-right">
+              <span class="text-xs md:text-sm font-bold text-slate-300 block">${r.combos || 0} combos</span>
+              <span class="text-[10px] text-slate-500 font-semibold block">${r.cervejas || 0} cervejas</span>
             </div>
 
-            <!-- TURMA -->
-            <div class="col-span-5 sm:col-span-6 flex items-center gap-2">
-              <span class="font-black ${corTurma}">Turma ${r.turma}</span>
-              ${ehLider ? '<span class="hidden sm:inline bg-amber-400 text-slate-950 text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider">Líder</span>' : ''}
-            </div>
-
-            <!-- COMBOS -->
-            <div class="col-span-2 text-center hidden sm:block font-bold text-sm text-neutral-400">
-              ${r.combos || 0} <span class="text-[10px] text-neutral-600">combos</span>
-            </div>
-
-            <!-- PONTUAÇÃO -->
-            <div class="col-span-5 sm:col-span-3 text-right">
-              <span class="${corPontos}">${r.pontos || 0}</span>
-              <span class="text-xs font-bold text-neutral-400 uppercase ml-1">pts</span>
+            <div class="text-right min-w-[90px]">
+              <span class="${corPontos} tracking-wider block leading-none">${r.pontos || 0}</span>
+              <span class="text-[10px] md:text-xs font-black text-slate-400 uppercase tracking-widest mt-0.5 block">PONTOS</span>
             </div>
           </div>
         `;
+
+        wrapper.appendChild(div);
+
+        // Atualiza memória para o próximo ciclo
+        rankingAnterior[r.turma] = r.pontos;
       });
+    }
+
+    // ==============================================================
+    // ROLAGEM AUTOMÁTICA DE TELÃO (AUTO-SCROLL SUAVE)
+    // ==============================================================
+    let direcaoScroll = 1;
+    let posicaoScroll = 0;
+
+    function executarAutoScroll() {
+      const main = document.querySelector("main");
+      const wrapper = document.getElementById("scrollWrapper");
+      if (!main || !wrapper) return;
+
+      const alturaContainer = main.clientHeight;
+      const alturaTotalLista = wrapper.scrollHeight;
+      const limiteScroll = alturaTotalLista - alturaContainer;
+
+      if (limiteScroll <= 20) return; // Se couber tudo na tela da TV, não rola
+
+      posicaoScroll += (direcaoScroll * 1.5); // velocidade suave
+
+      if (posicaoScroll >= limiteScroll) {
+        direcaoScroll = 0; // Pausa no final para ler os últimos colocados
+        setTimeout(() => {
+          direcaoScroll = -1; // Começa a subir de volta
+        }, 3000);
+      } else if (posicaoScroll <= 0) {
+        posicaoScroll = 0;
+        direcaoScroll = 0; // Pausa no topo mostrando o líder
+        setTimeout(() => {
+          direcaoScroll = 1; // Começa a descer
+        }, 5000);
+      }
+
+      wrapper.style.transform = `translateY(-${posicaoScroll}px)`;
     }
 
     // Inicialização
     setInterval(atualizarRelogio, 1000);
     atualizarRelogio();
     buscarDadosTelao();
-    setInterval(buscarDadosTelao, 8000); // Atualiza os pontos a cada 8 segundos
+    setInterval(buscarDadosTelao, 8000); // Busca pontos novos a cada 8s
+    setInterval(executarAutoScroll, 50);  // Animação de scroll suave de balada
   </script>
 </body>
 </html>
