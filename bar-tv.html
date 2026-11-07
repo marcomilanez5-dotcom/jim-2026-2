@@ -3,10 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>JIM 2026.2 — Placar de Consumo (Balada)</title>
+  <title>JIM 2026.2 — Placar do Bar</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,800;0,900;1,900&family=Inter:wght@700;800;900&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
   <style>
     body {
       font-family: 'Montserrat', sans-serif;
@@ -14,15 +15,11 @@
       color: #FFFFFF;
       margin: 0;
       padding: 0;
-      overflow: hidden; /* Controlado via auto-scroll suave */
+      overflow: hidden;
     }
     .neon-gold {
       text-shadow: 0 0 25px rgba(245, 158, 11, 0.9), 0 0 50px rgba(245, 158, 11, 0.5);
     }
-    .neon-glow-red {
-      text-shadow: 0 0 20px rgba(239, 68, 68, 0.8);
-    }
-    /* Card do Líder Absoluto */
     .card-lider-balada {
       background: linear-gradient(135deg, rgba(245, 158, 11, 0.35) 0%, rgba(20, 16, 5, 0.95) 100%);
       border: 2.5px solid #F59E0B;
@@ -33,36 +30,74 @@
       border: 1.5px solid rgba(51, 65, 85, 0.7);
       box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
     }
-    /* Efeito quando uma turma acabou de pontuar */
-    @keyframes flash-compra {
-      0%, 100% { border-color: rgba(51, 65, 85, 0.7); }
-      50% { border-color: #22C55E; box-shadow: 0 0 35px rgba(34, 197, 94, 0.8); transform: scale(1.02); }
+    @keyframes pulse-pop {
+      0%, 100% { transform: scale(1); box-shadow: 0 0 50px rgba(245, 158, 11, 0.6); }
+      50% { transform: scale(1.02); box-shadow: 0 0 90px rgba(245, 158, 11, 0.9); }
     }
-    .venda-recente {
-      animation: flash-compra 1.5s 3 ease-in-out;
-    }
-    /* Animação da coroa */
-    @keyframes float-crown {
-      0%, 100% { transform: translateY(0) rotate(0deg); }
-      50% { transform: translateY(-4px) rotate(-3deg); }
-    }
-    .anim-coroa {
-      display: inline-block;
-      animation: float-crown 2s infinite ease-in-out;
+    .card-campeao-final {
+      background: radial-gradient(circle, rgba(35, 28, 5, 0.98) 0%, rgba(5, 5, 10, 0.98) 100%);
+      border: 3.5px solid #F59E0B;
+      animation: pulse-pop 2s infinite ease-in-out;
     }
   </style>
 </head>
-<body class="h-screen w-screen flex flex-col justify-between box-border p-4 md:p-6">
+<body class="h-screen w-screen flex flex-col justify-between box-border p-4 md:p-6 relative">
 
-  <!-- CABEÇALHO IMPONENTE ESTILO FESTIVAL -->
+  <!-- ================= OVERLAY GIGANTE DE CAMPEÃO DO BAR ================= -->
+  <div id="overlayCampeaoBar" class="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 hidden">
+    <div class="card-campeao-final w-full max-w-2xl rounded-3xl p-6 sm:p-10 text-center space-y-5 shadow-2xl relative">
+      
+      <!-- COROA E TROFÉU -->
+      <div class="relative inline-block">
+        <span class="text-6xl sm:text-7xl block animate-bounce">👑</span>
+        <span class="text-4xl sm:text-5xl -mt-4 block text-amber-400">🏆</span>
+      </div>
+
+      <!-- TÍTULO -->
+      <div>
+        <span class="text-xs sm:text-sm font-black uppercase text-amber-400 tracking-widest bg-amber-950/80 border border-amber-500/60 px-4 py-1 rounded-full inline-block mb-2">
+          CAMPEÃ OFICIAL DO TROFÉU ETÍLICO
+        </span>
+        <h2 id="nomeTurmaCampeaoBar" class="text-4xl sm:text-6xl font-black text-white tracking-wider neon-gold">
+          TURMA --
+        </h2>
+      </div>
+
+      <!-- FRASE OFICIAL DA NIGHT -->
+      <div class="bg-amber-500/10 border-2 border-amber-400/50 py-3.5 px-4 rounded-2xl">
+        <p class="text-base sm:text-2xl font-black italic text-yellow-300 tracking-wide uppercase">
+          “A turma que mais desce combo na night”
+        </p>
+      </div>
+
+      <!-- PONTUAÇÃO FINAL -->
+      <div class="flex justify-center items-center gap-6 text-sm sm:text-base font-extrabold text-neutral-300">
+        <div>
+          <span id="combosCampeaoBar" class="text-2xl sm:text-3xl font-black text-white block">0</span>
+          <span class="text-[11px] text-amber-400 uppercase">Combos Consumidos</span>
+        </div>
+        <div class="h-8 w-px bg-neutral-700"></div>
+        <div>
+          <span id="pontosCampeaoBar" class="text-2xl sm:text-3xl font-black text-yellow-400 block">0</span>
+          <span class="text-[11px] text-amber-400 uppercase">Pontos Finais</span>
+        </div>
+      </div>
+
+      <p class="text-[11px] text-neutral-500 font-bold uppercase tracking-widest pt-2">
+        DISPUTA ENCERRADA PELA DIRETORIA • JIM 2026.2
+      </p>
+    </div>
+  </div>
+
+  <!-- CABEÇALHO DA TV -->
   <header class="max-w-4xl w-full mx-auto flex justify-between items-center border-b border-neutral-800 pb-3">
     <div class="flex items-center gap-3">
       <div class="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-gradient-to-tr from-amber-500 to-yellow-300 text-slate-950 flex items-center justify-center text-2xl md:text-3xl font-black shadow-xl">
-        <i class="fas fa-glass-cheers"></i>
+        <i class="fas fa-beer"></i>
       </div>
       <div>
         <h1 class="text-xl md:text-3xl font-black tracking-wider text-amber-400 neon-gold leading-none uppercase">
-          DISPUTA DO BAR — JIM 2026.2
+          TROFÉU ETÍLICO — JIM 2026.2
         </h1>
         <p class="text-[11px] md:text-xs text-neutral-400 font-bold uppercase tracking-widest mt-1">
           AAAMCTN • Placar Oficial de Guerra de Salas
@@ -70,42 +105,31 @@
       </div>
     </div>
 
-    <!-- RELÓGIO & STATUS AO VIVO -->
+    <!-- RELÓGIO & STATUS -->
     <div class="text-right">
       <span id="relogioTv" class="text-2xl md:text-3xl font-black text-white block leading-none font-mono">--:--:--</span>
-      <span class="text-[11px] text-red-500 font-black uppercase tracking-widest flex items-center gap-1.5 justify-end mt-1 neon-glow-red">
+      <span id="badgeStatusTv" class="text-[11px] text-red-500 font-black uppercase tracking-widest flex items-center gap-1.5 justify-end mt-1">
         <span class="w-2.5 h-2.5 rounded-full bg-red-600 animate-ping"></span>
-        RANKING AO VIVO
+        AO VIVO
       </span>
     </div>
   </header>
 
-  <!-- CONTAINER DA COLUNA ÚNICA COM SCROLL SUAVE AUTOMÁTICO -->
+  <!-- LISTA VERTICAL (AUTO-SCROLL) -->
   <main class="flex-1 w-full max-w-4xl mx-auto my-3 overflow-hidden relative">
-    
-    <!-- ÁREA QUE DESLIZA SUAVEMENTE DE CIMA A BAIXO -->
-    <div id="scrollWrapper" class="space-y-2.5 transition-transform duration-1000 ease-linear">
-      <!-- Preenchido via JavaScript -->
-    </div>
-
+    <div id="scrollWrapper" class="space-y-2.5 transition-transform duration-1000 ease-linear"></div>
   </main>
 
-  <!-- RODAPÉ DE BALADA COM ÚLTIMO COMPRADOR -->
-  <footer class="max-w-4xl w-full mx-auto border-t border-neutral-800/80 pt-2.5 flex justify-between items-center text-xs">
-    <div class="flex items-center gap-2 text-amber-400 font-black">
-      <i class="fas fa-fire-alt text-amber-500 animate-bounce"></i>
-      <span class="text-neutral-400 uppercase text-[11px]">Última pontuação:</span>
-      <span id="textoUltimaCompra" class="text-white font-extrabold truncate max-w-md">Aguardando pedidos no caixa...</span>
-    </div>
-    <span class="text-neutral-500 text-[11px] uppercase font-bold tracking-wider">
-      Quem bebe mais, pontua mais! 🍻
-    </span>
+  <!-- RODAPÉ -->
+  <footer class="max-w-4xl w-full mx-auto border-t border-neutral-800/80 pt-2.5 flex justify-between items-center text-xs text-neutral-500 font-semibold">
+    <span>Atualização contínua • AAAMCTN</span>
+    <span>Quem bebe mais, pontua mais! 🍻</span>
   </footer>
 
   <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbwltAE6CbhINH_jf3S00QrXg05R_Ubz-eDOmKtY338vBkAf8hf4iJ46o47KGiGF17JM/exec?modo=json";
-    let rankingAnterior = {};
-    let listaAtual = [];
+    let barEncerradoLocal = false;
+    let confettiDisparado = false;
 
     function atualizarRelogio() {
       const agora = new Date();
@@ -119,17 +143,57 @@
       try {
         const resp = await fetch(API_URL, { cache: "no-store" });
         const data = await resp.json();
-        listaAtual = data.rankingBar || [];
-        renderizarListaBalada(listaAtual);
+        
+        // Lê o status de encerramento
+        barEncerradoLocal = Boolean(data.barEncerrado);
+        const lista = data.rankingBar || [];
+
+        renderizarTelao(lista);
       } catch (err) {
         console.error("Erro no telão:", err);
       }
     }
 
-    function renderizarListaBalada(lista) {
-      const wrapper = document.getElementById("scrollWrapper");
-      if (!lista || lista.length === 0) return;
+    function renderizarTelao(lista) {
+      const overlay = document.getElementById("overlayCampeaoBar");
+      const badgeTv = document.getElementById("badgeStatusTv");
 
+      // ==========================================
+      // 1. CHECAGEM PRIORITÁRIA DE ENCERRAMENTO:
+      // ==========================================
+      if (barEncerradoLocal) {
+        // Pega o primeiro colocado da lista (ou dados de fallback)
+        const campeao = (lista && lista.length > 0) ? lista[0] : { turma: "48B", combos: 0, pontos: 0 };
+
+        document.getElementById("nomeTurmaCampeaoBar").innerText = `TURMA ${campeao.turma}`;
+        document.getElementById("combosCampeaoBar").innerText = campeao.combos || 0;
+        document.getElementById("pontosCampeaoBar").innerText = campeao.pontos || 0;
+
+        // Mostra o card gigante
+        overlay.classList.remove("hidden");
+        badgeTv.innerHTML = `<span class="text-amber-400 font-black">🔒 ENCERRADO</span>`;
+
+        // Dispara chuva de confetes
+        if (!confettiDisparado && typeof confetti !== "undefined") {
+          confettiDisparado = true;
+          confetti({ particleCount: 150, spread: 90, origin: { y: 0.6 } });
+          setInterval(() => {
+            if (barEncerradoLocal) {
+              confetti({ particleCount: 70, spread: 70, origin: { y: 0.5 } });
+            }
+          }, 4500);
+        }
+        return; // Sai da função para não gastar processamento renderizando a lista de trás
+      } else {
+        // Se a disputa foi reaberta, esconde o card
+        overlay.classList.add("hidden");
+        confettiDisparado = false;
+        badgeTv.innerHTML = `<span class="w-2.5 h-2.5 rounded-full bg-red-600 animate-ping"></span> AO VIVO`;
+      }
+
+      // 2. RENDERIZAÇÃO DA LISTA NORMAL (QUANDO ABERTO)
+      if (!lista || lista.length === 0) return;
+      const wrapper = document.getElementById("scrollWrapper");
       wrapper.innerHTML = "";
 
       lista.forEach((r, idx) => {
@@ -137,10 +201,6 @@
         const ehLider = (posicao === 1);
         const ehSegundo = (posicao === 2);
         const ehTerceiro = (posicao === 3);
-
-        // Checa se os pontos subiram nesta rodada para fazer piscar
-        const pontosAntes = rankingAnterior[r.turma] || 0;
-        const subiuPontos = (r.pontos > pontosAntes && pontosAntes > 0);
 
         let estiloCard = "linha-balada";
         let iconePos = `${posicao}º`;
@@ -150,7 +210,7 @@
 
         if (ehLider) {
           estiloCard = "card-lider-balada";
-          iconePos = `<span class="anim-coroa text-yellow-300 text-xl md:text-2xl mr-1">👑</span> 1º`;
+          iconePos = `<span class="text-yellow-300 text-xl md:text-2xl mr-1">👑</span> 1º`;
           corNomeTurma = "text-yellow-300 font-black text-xl md:text-2xl neon-gold";
           corPontos = "text-yellow-400 font-black text-2xl md:text-4xl neon-gold";
           paddingCard = "py-3.5 px-5";
@@ -167,75 +227,52 @@
         }
 
         const div = document.createElement("div");
-        div.className = `${estiloCard} ${paddingCard} rounded-2xl flex items-center justify-between ${subiuPontos ? 'venda-recente' : ''} transition-all`;
-
+        div.className = `${estiloCard} ${paddingCard} rounded-2xl flex items-center justify-between transition-all`;
         div.innerHTML = `
-          <!-- POSIÇÃO & NOME DA TURMA -->
           <div class="flex items-center gap-3 md:gap-4 min-w-0">
             <span class="font-black text-base md:text-xl w-14 text-center text-slate-300 flex items-center justify-center">
               ${iconePos}
             </span>
             <div>
-              <span class="${corNomeTurma} tracking-wider block">
-                Turma ${r.turma}
-              </span>
-              ${ehLider ? '<span class="text-[10px] font-extrabold uppercase text-amber-300 tracking-widest block -mt-0.5">Líder Absoluto do Bar</span>' : ''}
+              <span class="${corNomeTurma} tracking-wider block">Turma ${r.turma}</span>
+              ${ehLider ? '<span class="text-[10px] font-extrabold uppercase text-amber-300 tracking-widest block -mt-0.5">Líder do Bar</span>' : ''}
             </div>
           </div>
-
-          <!-- DETALHES & PONTUAÇÃO GIGANTE -->
           <div class="flex items-center gap-4 md:gap-8 text-right whitespace-nowrap">
             <div class="hidden sm:block text-right">
               <span class="text-xs md:text-sm font-bold text-slate-300 block">${r.combos || 0} combos</span>
-              <span class="text-[10px] text-slate-500 font-semibold block">${r.cervejas || 0} cervejas</span>
             </div>
-
             <div class="text-right min-w-[90px]">
               <span class="${corPontos} tracking-wider block leading-none">${r.pontos || 0}</span>
               <span class="text-[10px] md:text-xs font-black text-slate-400 uppercase tracking-widest mt-0.5 block">PONTOS</span>
             </div>
           </div>
         `;
-
         wrapper.appendChild(div);
-
-        // Atualiza memória para o próximo ciclo
-        rankingAnterior[r.turma] = r.pontos;
       });
     }
 
-    // ==============================================================
-    // ROLAGEM AUTOMÁTICA DE TELÃO (AUTO-SCROLL SUAVE)
-    // ==============================================================
+    // AUTO-SCROLL
     let direcaoScroll = 1;
     let posicaoScroll = 0;
-
     function executarAutoScroll() {
+      if (barEncerradoLocal) return;
       const main = document.querySelector("main");
       const wrapper = document.getElementById("scrollWrapper");
       if (!main || !wrapper) return;
 
-      const alturaContainer = main.clientHeight;
-      const alturaTotalLista = wrapper.scrollHeight;
-      const limiteScroll = alturaTotalLista - alturaContainer;
+      const limiteScroll = wrapper.scrollHeight - main.clientHeight;
+      if (limiteScroll <= 20) return;
 
-      if (limiteScroll <= 20) return; // Se couber tudo na tela da TV, não rola
-
-      posicaoScroll += (direcaoScroll * 1.5); // velocidade suave
-
+      posicaoScroll += (direcaoScroll * 1.5);
       if (posicaoScroll >= limiteScroll) {
-        direcaoScroll = 0; // Pausa no final para ler os últimos colocados
-        setTimeout(() => {
-          direcaoScroll = -1; // Começa a subir de volta
-        }, 3000);
+        direcaoScroll = 0;
+        setTimeout(() => { direcaoScroll = -1; }, 3000);
       } else if (posicaoScroll <= 0) {
         posicaoScroll = 0;
-        direcaoScroll = 0; // Pausa no topo mostrando o líder
-        setTimeout(() => {
-          direcaoScroll = 1; // Começa a descer
-        }, 5000);
+        direcaoScroll = 0;
+        setTimeout(() => { direcaoScroll = 1; }, 5000);
       }
-
       wrapper.style.transform = `translateY(-${posicaoScroll}px)`;
     }
 
@@ -243,8 +280,8 @@
     setInterval(atualizarRelogio, 1000);
     atualizarRelogio();
     buscarDadosTelao();
-    setInterval(buscarDadosTelao, 8000); // Busca pontos novos a cada 8s
-    setInterval(executarAutoScroll, 50);  // Animação de scroll suave de balada
+    setInterval(buscarDadosTelao, 5000); // Atualiza mais rápido (a cada 5 segundos)
+    setInterval(executarAutoScroll, 50);
   </script>
 </body>
 </html>
