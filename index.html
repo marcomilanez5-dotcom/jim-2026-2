@@ -3,278 +3,829 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>JIM 2026.2 — Placar do Bar</title>
+  <title>JIM 2026.2 — Central do Torcedor</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,800;0,900;1,900&family=Inter:wght@700;800;900&display=swap" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
   <style>
-    body {
-      font-family: 'Montserrat', sans-serif;
-      background-color: #03050C;
-      color: #FFFFFF;
-      margin: 0;
-      padding: 0;
-      overflow: hidden;
+    body { font-family: 'Inter', sans-serif; }
+    .bg-cacique { background-color: #0F172A; }
+    @keyframes pulse-red {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
     }
-    .neon-gold {
-      text-shadow: 0 0 25px rgba(245, 158, 11, 0.9), 0 0 50px rgba(245, 158, 11, 0.5);
+    .pulse-live { animation: pulse-red 1.5s infinite; }
+    .badge-novo { animation: pulse 2s infinite; }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.6; }
     }
-    .card-lider-balada {
-      background: linear-gradient(135deg, rgba(245, 158, 11, 0.35) 0%, rgba(20, 16, 5, 0.95) 100%);
-      border: 2.5px solid #F59E0B;
-      box-shadow: 0 0 40px rgba(245, 158, 11, 0.45);
+    .jogo-destaque {
+      border: 2px solid #FCD34D !important;
+      background-color: #FFFBEB !important;
+      box-shadow: 0 0 10px rgba(252, 211, 77, 0.3);
     }
-    .linha-balada {
-      background: rgba(15, 23, 42, 0.85);
-      border: 1.5px solid rgba(51, 65, 85, 0.7);
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+    .vitoria {
+      background-color: #DCFCE7 !important;
+      border-color: #22C55E !important;
     }
-    @keyframes pulse-pop {
-      0%, 100% { transform: scale(1); box-shadow: 0 0 50px rgba(245, 158, 11, 0.6); }
-      50% { transform: scale(1.02); box-shadow: 0 0 90px rgba(245, 158, 11, 0.9); }
+    .derrota {
+      background-color: #FEE2E2 !important;
+      border-color: #EF4444 !important;
     }
-    .card-campeao-final {
-      background: radial-gradient(circle, rgba(30, 24, 5, 0.98) 0%, rgba(5, 5, 10, 0.98) 100%);
-      border: 3px solid #F59E0B;
-      animation: pulse-pop 2s infinite ease-in-out;
+    .card-ouro {
+      background: linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%);
+      border: 1.5px solid #FCD34D;
+    }
+    .bracket-round {
+      min-width: 170px;
     }
   </style>
 </head>
-<body class="h-screen w-screen flex flex-col justify-between box-border p-4 md:p-6 relative">
+<body class="bg-gray-100 text-gray-800 pb-16">
 
-  <!-- ================= OVERLAY GIGANTE DE CAMPEÃO DO BAR ================= -->
-  <div id="overlayCampeaoBar" class="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 hidden">
-    <div class="card-campeao-final w-full max-w-2xl rounded-3xl p-6 sm:p-10 text-center space-y-5 shadow-2xl relative">
-      
-      <!-- COROA E TROFÉU -->
-      <div class="relative inline-block">
-        <span class="text-6xl sm:text-7xl block animate-bounce">👑</span>
-        <span class="text-4xl sm:text-5xl -mt-4 block text-amber-400">🏆</span>
-      </div>
-
-      <!-- TÍTULO -->
-      <div>
-        <span class="text-xs sm:text-sm font-black uppercase text-amber-400 tracking-widest bg-amber-950/80 border border-amber-500/60 px-4 py-1 rounded-full inline-block mb-2">
-          CAMPEÃ OFICIAL DO TROFÉU ETÍLICO
-        </span>
-        <h2 id="nomeTurmaCampeaoBar" class="text-4xl sm:text-6xl font-black text-white tracking-wider neon-gold">
-          TURMA 48B
-        </h2>
-      </div>
-
-      <!-- FRASE OFICIAL DA NIGHT -->
-      <div class="bg-amber-500/10 border-2 border-amber-400/50 py-3.5 px-4 rounded-2xl">
-        <p class="text-base sm:text-2xl font-black italic text-yellow-300 tracking-wide uppercase">
-          “A turma que mais desce combo na night”
-        </p>
-      </div>
-
-      <!-- PONTUAÇÃO FINAL -->
-      <div class="flex justify-center items-center gap-6 text-sm sm:text-base font-extrabold text-neutral-300">
-        <div>
-          <span id="combosCampeaoBar" class="text-2xl sm:text-3xl font-black text-white block">0</span>
-          <span class="text-[11px] text-amber-400 uppercase">Combos Consumidos</span>
-        </div>
-        <div class="h-8 w-px bg-neutral-700"></div>
-        <div>
-          <span id="pontosCampeaoBar" class="text-2xl sm:text-3xl font-black text-yellow-400 block">0</span>
-          <span class="text-[11px] text-amber-400 uppercase">Pontos Finais</span>
-        </div>
-      </div>
-
-      <p class="text-[11px] text-neutral-500 font-bold uppercase tracking-widest pt-2">
-        DISPUTA ENCERRADA PELA DIRETORIA • JIM 2026.2
-      </p>
-    </div>
+  <!-- BANNER DE AVISO DA DIRETORIA -->
+  <div id="bannerAviso" class="hidden bg-amber-400 text-amber-950 px-4 py-2 text-xs sm:text-sm font-bold text-center border-b border-amber-500 shadow-sm flex items-center justify-center gap-2">
+    <i class="fas fa-bullhorn text-amber-900 animate-bounce"></i>
+    <span id="textoAviso"></span>
   </div>
 
-  <!-- CABEÇALHO DA TV -->
-  <header class="max-w-4xl w-full mx-auto flex justify-between items-center border-b border-neutral-800 pb-3">
-    <div class="flex items-center gap-3">
-      <div class="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-gradient-to-tr from-amber-500 to-yellow-300 text-slate-950 flex items-center justify-center text-2xl md:text-3xl font-black shadow-xl">
-        <i class="fas fa-beer"></i>
+  <!-- HEADER -->
+  <header class="bg-cacique text-white p-4 shadow-md sticky top-0 z-50">
+    <div class="max-w-4xl mx-auto flex justify-between items-center">
+      <div class="flex items-center gap-2">
+        <i class="fas fa-trophy text-yellow-400 text-xl"></i>
+        <div>
+          <h1 class="text-lg font-bold tracking-wide leading-none">JIM 2026.2 — AAAMCTN</h1>
+          <p class="text-xs text-gray-400">Acompanhamento Ao Vivo</p>
+        </div>
       </div>
-      <div>
-        <h1 class="text-xl md:text-3xl font-black tracking-wider text-amber-400 neon-gold leading-none uppercase">
-          TROFÉU ETÍLICO — JIM 2026.2
-        </h1>
-        <p class="text-[11px] md:text-xs text-neutral-400 font-bold uppercase tracking-widest mt-1">
-          AAAMCTN • Placar Oficial de Guerra de Salas
-        </p>
+      <div class="text-right text-xs text-gray-300 flex items-center gap-2">
+        <span class="hidden sm:inline">🔄 Ao Vivo</span>
+        <i class="fas fa-sync-alt fa-spin text-blue-400"></i>
       </div>
     </div>
 
-    <!-- RELÓGIO & STATUS -->
-    <div class="text-right">
-      <span id="relogioTv" class="text-2xl md:text-3xl font-black text-white block leading-none font-mono">--:--:--</span>
-      <span id="badgeStatusTv" class="text-[11px] text-red-500 font-black uppercase tracking-widest flex items-center gap-1.5 justify-end mt-1">
-        <span class="w-2.5 h-2.5 rounded-full bg-red-600 animate-ping"></span>
-        AO VIVO
-      </span>
+    <!-- 3 ABAS DE NAVEGAÇÃO SUPERIOR -->
+    <div class="max-w-4xl mx-auto mt-3 grid grid-cols-3 gap-2 text-center">
+      <button id="btnAbaJogos" onclick="trocarAbaPrincipal('jogos')" 
+              class="py-2 text-xs sm:text-sm font-bold rounded-lg bg-blue-600 text-white shadow-sm flex items-center justify-center gap-1.5 transition">
+        <i class="fas fa-futbol"></i>
+        <span>Jogos</span>
+      </button>
+
+      <button id="btnAbaChaveamento" onclick="trocarAbaPrincipal('chaveamento')" 
+              class="py-2 text-xs sm:text-sm font-bold rounded-lg bg-slate-800 text-gray-300 hover:text-white flex items-center justify-center gap-1.5 transition border border-slate-700">
+        <i class="fas fa-sitemap text-emerald-400"></i>
+        <span>Chaves</span>
+      </button>
+
+      <button id="btnAbaCampeoes" onclick="trocarAbaPrincipal('campeoes')" 
+              class="py-2 text-xs sm:text-sm font-bold rounded-lg bg-slate-800 text-gray-300 hover:text-white flex items-center justify-center gap-1.5 transition border border-slate-700">
+        <i class="fas fa-crown text-yellow-400"></i>
+        <span>Pódio</span>
+        <span id="badgeNumCampeoes" class="hidden ml-1 px-1.5 py-0.2 bg-yellow-500 text-slate-900 text-[10px] font-black rounded-full">0</span>
+      </button>
     </div>
   </header>
 
-  <!-- LISTA VERTICAL (AUTO-SCROLL) -->
-  <main class="flex-1 w-full max-w-4xl mx-auto my-3 overflow-hidden relative">
-    <div id="scrollWrapper" class="space-y-2.5 transition-transform duration-1000 ease-linear"></div>
+  <!-- ================= ABA 1: JOGOS & CONFRONTOS ================= -->
+  <main id="secaoAbaJogos" class="max-w-4xl mx-auto p-4 space-y-6">
+
+    <!-- PRÓXIMOS JOGOS -->
+    <section class="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
+      <h2 class="text-sm font-bold uppercase tracking-wider text-gray-700 mb-3 flex items-center gap-2">
+        <i class="fas fa-clock text-blue-600"></i> Próximos Jogos da Sua Turma (Ordem Cronológica)
+      </h2>
+      <div id="proximosJogos" class="space-y-2">
+        <p class="text-gray-500 text-sm">Selecione sua turma para ver os próximos jogos</p>
+      </div>
+    </section>
+
+    <!-- JOGOS AO VIVO -->
+    <section id="secaoAoVivo" class="hidden">
+      <div class="bg-red-50 border border-red-200 rounded-xl p-4 shadow-sm">
+        <div class="flex items-center gap-2 mb-3">
+          <span class="w-3 h-3 bg-red-600 rounded-full pulse-live"></span>
+          <h2 class="text-sm font-bold uppercase tracking-wider text-red-700">Acontecendo Agora</h2>
+        </div>
+        <div id="cardsAoVivo" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
+      </div>
+    </section>
+
+    <!-- FILTROS -->
+    <section class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 space-y-3">
+      <h2 class="text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">Filtrar Confrontos</h2>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Modalidade</label>
+          <select id="filterModalidade" onchange="renderAll()" class="w-full p-2 bg-gray-50 border border-gray-300 rounded-lg text-sm font-semibold text-gray-800">
+            <option value="Todas">Todas as Modalidades</option>
+            <option value="Futebol Sete Masc">Futebol Sete Masc</option>
+            <option value="Futebol Sete Fem">Futebol Sete Fem</option>
+            <option value="Vôlei Masc">Vôlei Masc</option>
+            <option value="Vôlei Fem">Vôlei Fem</option>
+            <option value="Beach Tennis">Beach Tennis</option>
+            <option value="Tênis Masc">Tênis Masc</option>
+            <option value="Tênis Fem">Tênis Fem</option>
+            <option value="Sinuca">Sinuca</option>
+            <option value="Pebolim">Pebolim</option>
+            <option value="FIFA">FIFA</option>
+            <option value="Xadrez">Xadrez</option>
+            <option value="Truco Gaudério">Truco Gaudério</option>
+            <option value="Truco Paulista">Truco Paulista</option>
+            <option value="Jogos Alcoólicos">Jogos Alcoólicos</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Sua Turma</label>
+          <select id="filterTurma" onchange="salvarTurmaLocal(); renderAll()" class="w-full p-2 bg-gray-50 border border-gray-300 rounded-lg text-sm font-semibold text-gray-800 border-blue-400">
+            <option value="Todas">Todas as Turmas</option>
+            <option value="45">Turma 45</option>
+            <option value="46">Turma 46</option>
+            <option value="47A">Turma 47A</option>
+            <option value="47B">Turma 47B</option>
+            <option value="47C">Turma 47C</option>
+            <option value="48A">Turma 48A</option>
+            <option value="48B">Turma 48B</option>
+            <option value="48C">Turma 48C</option>
+            <option value="49A">Turma 49A</option>
+            <option value="49B">Turma 49B</option>
+            <option value="49C">Turma 49C</option>
+            <option value="50A">Turma 50A</option>
+            <option value="50B">Turma 50B</option>
+            <option value="50C">Turma 50C</option>
+          </select>
+        </div>
+      </div>
+      <div class="flex flex-wrap gap-2 pt-1" id="grupoBotoesDias">
+        <button onclick="setDia('Todos')" id="btnDiaTodos" class="btn-dia px-3 py-1.5 text-xs font-bold rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200">Todos os Dias</button>
+        <button onclick="setDia('Quinta')" id="btnDiaQuinta" class="btn-dia px-3 py-1.5 text-xs font-bold rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200">Quinta</button>
+        <button onclick="setDia('Sexta')" id="btnDiaSexta" class="btn-dia px-3 py-1.5 text-xs font-bold rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200">Sexta</button>
+        <button onclick="setDia('Sábado')" id="btnDiaSabado" class="btn-dia px-3 py-1.5 text-xs font-bold rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200">Sábado</button>
+        <button onclick="setDia('Domingo')" id="btnDiaDomingo" class="btn-dia px-3 py-1.5 text-xs font-bold rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200">Domingo</button>
+      </div>
+    </section>
+
+    <!-- LISTA DE TODOS OS CONFRONTOS -->
+    <section>
+      <div id="listaJogos" class="grid grid-cols-1 gap-3"></div>
+    </section>
   </main>
 
-  <!-- RODAPÉ -->
-  <footer class="max-w-4xl w-full mx-auto border-t border-neutral-800/80 pt-2.5 flex justify-between items-center text-xs text-neutral-500 font-semibold">
-    <span>Atualização contínua • AAAMCTN</span>
-    <span>Quem bebe mais, pontua mais! 🍻</span>
-  </footer>
+  <!-- ================= ABA 2: CHAVEAMENTO MATA-MATA (BRACKET) ================= -->
+  <main id="secaoAbaChaveamento" class="max-w-5xl mx-auto p-4 space-y-4 hidden">
+    
+    <div class="bg-gradient-to-r from-emerald-600 to-teal-700 rounded-2xl p-4 sm:p-5 text-white shadow-lg flex items-center justify-between">
+      <div>
+        <h2 class="text-xl font-black flex items-center gap-2">
+          <i class="fas fa-sitemap text-emerald-200 text-xl"></i>
+          <span>Chaveamento Mata-Mata</span>
+        </h2>
+        <p class="text-xs text-emerald-100 mt-0.5">Acompanhe a árvore do torneio das Oitavas até a Grande Final!</p>
+      </div>
+      <span class="text-2xl sm:text-3xl">🌳</span>
+    </div>
+
+    <!-- SELETOR DE MODALIDADE DO CHAVEAMENTO -->
+    <section class="bg-white p-3.5 rounded-xl shadow-sm border border-gray-200">
+      <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Selecione a Modalidade:</label>
+      <select id="selectModalidadeBracket" onchange="renderBracket()" class="w-full p-2 bg-gray-50 border border-gray-300 rounded-lg text-sm font-bold text-gray-800 focus:outline-none focus:border-emerald-500">
+        <option value="Futebol Sete Masc">⚽ Futebol Sete Masc</option>
+        <option value="Futebol Sete Fem">⚽ Futebol Sete Fem</option>
+        <option value="Vôlei Masc">🏐 Vôlei Masc</option>
+        <option value="Vôlei Fem">🏐 Vôlei Fem</option>
+        <option value="Beach Tennis">🎾 Beach Tennis</option>
+        <option value="Tênis Masc">🎾 Tênis Masc</option>
+        <option value="Tênis Fem">🎾 Tênis Fem</option>
+        <option value="Sinuca">🎱 Sinuca</option>
+        <option value="Pebolim">⚽ Pebolim</option>
+        <option value="FIFA">🎮 FIFA</option>
+        <option value="Xadrez">♟️ Xadrez</option>
+        <option value="Truco Gaudério">🃏 Truco Gaudério</option>
+        <option value="Truco Paulista">🃏 Truco Paulista</option>
+        <option value="Jogos Alcoólicos">🍻 Jogos Alcoólicos</option>
+      </select>
+    </section>
+
+    <!-- ÁRVORE VISUAL COM ROLAGEM HORIZONTAL SUAVE NO CELULAR -->
+    <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-200 overflow-x-auto">
+      <div id="bracketTreeContainer" class="flex gap-4 sm:gap-6 min-w-max pb-2"></div>
+    </div>
+  </main>
+
+  <!-- ================= ABA 3: PÓDIO OFICIAL ================= -->
+  <main id="secaoAbaCampeoes" class="max-w-4xl mx-auto p-4 space-y-6 hidden">
+    
+    <div class="bg-gradient-to-r from-amber-500 to-yellow-600 rounded-2xl p-5 text-white shadow-lg flex items-center justify-between">
+      <div>
+        <h2 class="text-xl font-black flex items-center gap-2">
+          <i class="fas fa-medal text-yellow-200 text-2xl"></i>
+          <span>Pódio Oficial</span>
+        </h2>
+        <p class="text-xs text-yellow-100 mt-0.5">Classificação do 1º ao 5º lugar das modalidades já finalizadas!</p>
+      </div>
+      <span class="text-3xl">🏆</span>
+    </div>
+
+    <!-- SELETOR DE DIA DOS CAMPEÕES -->
+    <div class="flex flex-wrap gap-2">
+      <button onclick="setDiaCampeoes('Todos')" id="btnCampTodos" class="btn-camp px-3 py-1.5 text-xs font-bold rounded-lg bg-blue-600 text-white shadow-sm">Todas as Modalidades</button>
+      <button onclick="setDiaCampeoes('Quinta')" id="btnCampQuinta" class="btn-camp px-3 py-1.5 text-xs font-bold rounded-lg bg-white border text-gray-700 hover:bg-gray-50">Quinta</button>
+      <button onclick="setDiaCampeoes('Sexta')" id="btnCampSexta" class="btn-camp px-3 py-1.5 text-xs font-bold rounded-lg bg-white border text-gray-700 hover:bg-gray-50">Sexta</button>
+      <button onclick="setDiaCampeoes('Sábado')" id="btnCampSabado" class="btn-camp px-3 py-1.5 text-xs font-bold rounded-lg bg-white border text-gray-700 hover:bg-gray-50">Sábado</button>
+      <button onclick="setDiaCampeoes('Domingo')" id="btnCampDomingo" class="btn-camp px-3 py-1.5 text-xs font-bold rounded-lg bg-white border text-gray-700 hover:bg-gray-50">Domingo</button>
+    </div>
+
+    <!-- LISTA DE CARDS DE PÓDIO (1º AO 5º) -->
+    <div id="containerCampeoes" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+  </main>
 
   <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbwltAE6CbhINH_jf3S00QrXg05R_Ubz-eDOmKtY338vBkAf8hf4iJ46o47KGiGF17JM/exec?modo=json";
-    let rankingAnterior = {};
-    let barEncerradoLocal = false;
-    let confettiDisparado = false;
+    let jogosData = [];
+    let colocacoesData = [];
+    let diaSelecionado = "Todos";
+    let diaCampeoesSelecionado = "Todos";
+    let turmaLocal = localStorage.getItem('jimTurma') || "Todas";
+    let carregando = false;
 
-    function atualizarRelogio() {
-      const agora = new Date();
-      const h = String(agora.getHours()).padStart(2, '0');
-      const m = String(agora.getMinutes()).padStart(2, '0');
-      const s = String(agora.getSeconds()).padStart(2, '0');
-      document.getElementById("relogioTv").innerText = `${h}:${m}:${s}`;
-    }
+    // CONTROLE DE NAVEGAÇÃO DAS 3 ABAS PRINCIPAIS
+    function trocarAbaPrincipal(aba) {
+      const secaoJogos = document.getElementById("secaoAbaJogos");
+      const secaoChaveamento = document.getElementById("secaoAbaChaveamento");
+      const secaoCampeoes = document.getElementById("secaoAbaCampeoes");
+      
+      const btnJogos = document.getElementById("btnAbaJogos");
+      const btnChaves = document.getElementById("btnAbaChaveamento");
+      const btnCampeoes = document.getElementById("btnAbaCampeoes");
 
-    async function buscarDadosTelao() {
-      try {
-        const resp = await fetch(API_URL, { cache: "no-store" });
-        const data = await resp.json();
-        const lista = data.rankingBar || [];
-        barEncerradoLocal = Boolean(data.barEncerrado);
+      secaoJogos.classList.add("hidden");
+      secaoChaveamento.classList.add("hidden");
+      secaoCampeoes.classList.add("hidden");
 
-        renderizarTelao(lista);
-      } catch (err) {
-        console.error("Erro no telão:", err);
+      const estiloInativo = "py-2 text-xs sm:text-sm font-bold rounded-lg bg-slate-800 text-gray-300 hover:text-white flex items-center justify-center gap-1.5 transition border border-slate-700";
+      btnJogos.className = estiloInativo;
+      btnChaves.className = estiloInativo;
+      btnCampeoes.className = estiloInativo;
+
+      if (aba === 'jogos') {
+        secaoJogos.classList.remove("hidden");
+        btnJogos.className = "py-2 text-xs sm:text-sm font-bold rounded-lg bg-blue-600 text-white shadow-sm flex items-center justify-center gap-1.5 transition";
+      } else if (aba === 'chaveamento') {
+        secaoChaveamento.classList.remove("hidden");
+        btnChaves.className = "py-2 text-xs sm:text-sm font-bold rounded-lg bg-emerald-600 text-white shadow-sm flex items-center justify-center gap-1.5 transition";
+        renderBracket();
+      } else if (aba === 'campeoes') {
+        secaoCampeoes.classList.remove("hidden");
+        btnCampeoes.className = "py-2 text-xs sm:text-sm font-bold rounded-lg bg-yellow-500 text-slate-900 shadow-md flex items-center justify-center gap-1.5 transition";
+        renderCampeoes();
       }
     }
 
-    function renderizarTelao(lista) {
-      if (!lista || lista.length === 0) return;
+    function definirDiaAtualAutomatico() {
+      const hoje = new Date().getDay(); 
+      if (hoje === 4) diaSelecionado = "Quinta";
+      else if (hoje === 5) diaSelecionado = "Sexta";
+      else if (hoje === 6) diaSelecionado = "Sábado";
+      else if (hoje === 0) diaSelecionado = "Domingo";
+      else diaSelecionado = "Todos";
 
-      const overlay = document.getElementById("overlayCampeaoBar");
-      const badgeTv = document.getElementById("badgeStatusTv");
+      atualizarCoresBotoesDia();
+    }
 
-      // ==========================================
-      // SE A DIRETORIA CLICOU EM ENCERRAR O BAR:
-      // ==========================================
-      if (barEncerradoLocal) {
-        const campeao = lista[0]; // 1º colocado oficial
-        document.getElementById("nomeTurmaCampeaoBar").innerText = `TURMA ${campeao.turma}`;
-        document.getElementById("combosCampeaoBar").innerText = campeao.combos || 0;
-        document.getElementById("pontosCampeaoBar").innerText = campeao.pontos || 0;
-
-        overlay.classList.remove("hidden");
-        badgeTv.innerHTML = `<span class="text-amber-400 font-black">🔒 ENCERRADO</span>`;
-
-        // Dispara chuva de confetes festiva
-        if (!confettiDisparado && typeof confetti !== "undefined") {
-          confettiDisparado = true;
-          confetti({ particleCount: 150, spread: 90, origin: { y: 0.6 } });
-          setInterval(() => {
-            confetti({ particleCount: 80, spread: 70, origin: { y: 0.5 } });
-          }, 4000);
+    function atualizarCoresBotoesDia() {
+      document.querySelectorAll(".btn-dia").forEach(btn => {
+        if (btn.innerText.includes(diaSelecionado) || (diaSelecionado === "Todos" && btn.innerText.includes("Todos"))) {
+          btn.className = "btn-dia px-3 py-1.5 text-xs font-bold rounded-lg bg-blue-600 text-white shadow-sm";
+        } else {
+          btn.className = "btn-dia px-3 py-1.5 text-xs font-bold rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200";
         }
-        return;
-      } else {
-        overlay.classList.add("hidden");
-        badgeTv.innerHTML = `<span class="w-2.5 h-2.5 rounded-full bg-red-600 animate-ping"></span> AO VIVO`;
-      }
-
-      // RENDERIZAÇÃO DA LISTA NORMAL
-      const wrapper = document.getElementById("scrollWrapper");
-      wrapper.innerHTML = "";
-
-      lista.forEach((r, idx) => {
-        const posicao = idx + 1;
-        const ehLider = (posicao === 1);
-        const ehSegundo = (posicao === 2);
-        const ehTerceiro = (posicao === 3);
-
-        let estiloCard = "linha-balada";
-        let iconePos = `${posicao}º`;
-        let corNomeTurma = "text-white";
-        let corPontos = "text-amber-400";
-        let paddingCard = "py-2.5 px-4";
-
-        if (ehLider) {
-          estiloCard = "card-lider-balada";
-          iconePos = `<span class="text-yellow-300 text-xl md:text-2xl mr-1">👑</span> 1º`;
-          corNomeTurma = "text-yellow-300 font-black text-xl md:text-2xl neon-gold";
-          corPontos = "text-yellow-400 font-black text-2xl md:text-4xl neon-gold";
-          paddingCard = "py-3.5 px-5";
-        } else if (ehSegundo) {
-          estiloCard = "linha-balada border-slate-400/80 bg-slate-900/90";
-          iconePos = "🥈 2º";
-          corNomeTurma = "text-slate-200 font-black text-lg md:text-xl";
-          corPontos = "text-slate-200 font-black text-xl md:text-3xl";
-        } else if (ehTerceiro) {
-          estiloCard = "linha-balada border-amber-800/80 bg-amber-950/20";
-          iconePos = "🥉 3º";
-          corNomeTurma = "text-amber-100 font-black text-lg md:text-xl";
-          corPontos = "text-amber-500 font-black text-xl md:text-3xl";
-        }
-
-        const div = document.createElement("div");
-        div.className = `${estiloCard} ${paddingCard} rounded-2xl flex items-center justify-between transition-all`;
-        div.innerHTML = `
-          <div class="flex items-center gap-3 md:gap-4 min-w-0">
-            <span class="font-black text-base md:text-xl w-14 text-center text-slate-300 flex items-center justify-center">
-              ${iconePos}
-            </span>
-            <div>
-              <span class="${corNomeTurma} tracking-wider block">Turma ${r.turma}</span>
-              ${ehLider ? '<span class="text-[10px] font-extrabold uppercase text-amber-300 tracking-widest block -mt-0.5">Líder do Bar</span>' : ''}
-            </div>
-          </div>
-          <div class="flex items-center gap-4 md:gap-8 text-right whitespace-nowrap">
-            <div class="hidden sm:block text-right">
-              <span class="text-xs md:text-sm font-bold text-slate-300 block">${r.combos || 0} combos</span>
-            </div>
-            <div class="text-right min-w-[90px]">
-              <span class="${corPontos} tracking-wider block leading-none">${r.pontos || 0}</span>
-              <span class="text-[10px] md:text-xs font-black text-slate-400 uppercase tracking-widest mt-0.5 block">PONTOS</span>
-            </div>
-          </div>
-        `;
-        wrapper.appendChild(div);
       });
     }
 
-    // AUTO-SCROLL
-    let direcaoScroll = 1;
-    let posicaoScroll = 0;
-    function executarAutoScroll() {
-      if (barEncerradoLocal) return; // Se acabou, não rola
-      const main = document.querySelector("main");
-      const wrapper = document.getElementById("scrollWrapper");
-      if (!main || !wrapper) return;
+    function setDiaCampeoes(dia) {
+      diaCampeoesSelecionado = dia;
+      document.querySelectorAll(".btn-camp").forEach(btn => {
+        if (btn.innerText.includes(dia) || (dia === "Todos" && btn.innerText.includes("Todas"))) {
+          btn.className = "btn-camp px-3 py-1.5 text-xs font-bold rounded-lg bg-blue-600 text-white shadow-sm";
+        } else {
+          btn.className = "btn-camp px-3 py-1.5 text-xs font-bold rounded-lg bg-white border text-gray-700 hover:bg-gray-50";
+        }
+      });
+      renderCampeoes();
+    }
 
-      const limiteScroll = wrapper.scrollHeight - main.clientHeight;
-      if (limiteScroll <= 20) return;
+    function obterPesoCronologico(j) {
+      const h = String(j.horario || "").toLowerCase();
+      let pesoDia = 99;
 
-      posicaoScroll += (direcaoScroll * 1.5);
-      if (posicaoScroll >= limiteScroll) {
-        direcaoScroll = 0;
-        setTimeout(() => { direcaoScroll = -1; }, 3000);
-      } else if (posicaoScroll <= 0) {
-        posicaoScroll = 0;
-        direcaoScroll = 0;
-        setTimeout(() => { direcaoScroll = 1; }, 5000);
+      if (h.includes("quinta")) pesoDia = 1;
+      else if (h.includes("sexta")) pesoDia = 2;
+      else if (h.includes("sábado") || h.includes("sabado")) pesoDia = 3;
+      else if (h.includes("domingo")) pesoDia = 4;
+
+      const matchHora = h.match(/(\d{1,2}):(\d{2})/);
+      let horaDecimal = 0;
+      if (matchHora) {
+        horaDecimal = parseInt(matchHora[1], 10) + (parseInt(matchHora[2], 10) / 60);
       }
-      wrapper.style.transform = `translateY(-${posicaoScroll}px)`;
+
+      return (pesoDia * 100) + horaDecimal;
+    }
+
+    async function carregarJogos() {
+      if (carregando) return;
+      carregando = true;
+      try {
+        const resp = await fetch(API_URL, { cache: "no-store" });
+        const data = await resp.json();
+        jogosData = data.jogos || [];
+        colocacoesData = data.colocacoes || [];
+
+        const banner = document.getElementById("bannerAviso");
+        const textoAviso = document.getElementById("textoAviso");
+        if (data.aviso && data.aviso.trim() !== "") {
+          textoAviso.innerText = data.aviso;
+          banner.classList.remove("hidden");
+        } else {
+          banner.classList.add("hidden");
+        }
+
+        renderAll();
+        atualizarBadgeCampeoes();
+      } catch (err) {
+        console.error("Erro ao carregar jogos:", err);
+      } finally {
+        carregando = false;
+      }
+    }
+
+    function salvarTurmaLocal() {
+      const turma = document.getElementById("filterTurma").value;
+      localStorage.setItem('jimTurma', turma);
+      turmaLocal = turma;
+    }
+
+    function carregarTurmaLocal() {
+      const turma = localStorage.getItem('jimTurma');
+      if (turma) {
+        document.getElementById("filterTurma").value = turma;
+        turmaLocal = turma;
+      }
+    }
+
+    function setDia(dia) {
+      diaSelecionado = dia;
+      atualizarCoresBotoesDia();
+      renderAll();
+    }
+
+    function renderAll() {
+      renderAoVivo();
+      renderProximosJogos();
+      renderJogos();
+      renderCampeoes();
+      renderBracket();
+    }
+
+    function renderProximosJogos() {
+      const container = document.getElementById("proximosJogos");
+      container.innerHTML = "";
+
+      if (turmaLocal === "Todas") {
+        container.innerHTML = "<p class='text-gray-500 text-sm'>Selecione sua turma para ver próximos jogos</p>";
+        return;
+      }
+
+      const proximosJogos = jogosData.filter(j => {
+        const t1 = String(j.t1).trim().toLowerCase();
+        const t2 = String(j.t2).trim().toLowerCase();
+        const turmaBusca = String(turmaLocal).trim().toLowerCase();
+        const isMinhaTurma = t1 === turmaBusca || t2 === turmaBusca || t1.includes(turmaBusca) || t2.includes(turmaBusca);
+        return isMinhaTurma && (j.status === "Acontecerá" || j.status === "Em breve");
+      });
+
+      proximosJogos.sort((a, b) => obterPesoCronologico(a) - obterPesoCronologico(b));
+
+      const proximosTres = proximosJogos.slice(0, 3);
+
+      if (proximosTres.length === 0) {
+        container.innerHTML = "<p class='text-gray-500 text-sm'>Nenhum jogo futuro agendado para esta turma.</p>";
+        return;
+      }
+
+      proximosTres.forEach(j => {
+        const card = document.createElement("div");
+        card.className = "bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-300 p-3 rounded-lg shadow-sm";
+        card.innerHTML = `
+          <div class="flex justify-between items-center mb-2">
+            <span class="font-bold text-sm text-blue-900">${j.modalidade}</span>
+            <span class="text-xs text-blue-800 font-semibold bg-white/70 px-2 py-0.5 rounded">${j.horario || "A definir"}${j.local ? " • " + j.local : ""}</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <div class="font-bold text-sm text-gray-800">${j.t1}</div>
+            <div class="text-xs text-gray-500 font-bold uppercase">vs</div>
+            <div class="font-bold text-sm text-gray-800">${j.t2}</div>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function renderAoVivo() {
+      const container = document.getElementById("cardsAoVivo");
+      const secao = document.getElementById("secaoAoVivo");
+      container.innerHTML = "";
+      const emAndamento = jogosData.filter(j => j.status === "Em Andamento" || j.status === "Ao Vivo");
+      if (emAndamento.length > 0) {
+        secao.classList.remove("hidden");
+        emAndamento.forEach(j => {
+          container.appendChild(criarCardJogo(j, true));
+        });
+      } else {
+        secao.classList.add("hidden");
+      }
+    }
+
+    function renderJogos() {
+      const container = document.getElementById("listaJogos");
+      const mod = document.getElementById("filterModalidade").value;
+      container.innerHTML = "";
+
+      const jogosFiltrados = jogosData.filter(j => {
+        const matchMod = mod === "Todas" || j.modalidade === mod;
+        const t1Str = String(j.t1 || "").trim().toLowerCase();
+        const t2Str = String(j.t2 || "").trim().toLowerCase();
+        const turmaBusca = String(turmaLocal).trim().toLowerCase();
+        const matchTurma = turmaLocal === "Todas" || t1Str === turmaBusca || t2Str === turmaBusca || t1Str.includes(turmaBusca) || t2Str.includes(turmaBusca);
+        const matchDia = diaSelecionado === "Todos" || (j.horario && String(j.horario).toLowerCase().includes(diaSelecionado.toLowerCase()));
+        return matchMod && matchTurma && matchDia;
+      });
+
+      if (!jogosFiltrados.length) {
+        container.innerHTML = `<div class="text-center text-gray-500 py-10 bg-white rounded-xl shadow-sm border">Nenhum jogo encontrado para estes filtros.</div>`;
+        return;
+      }
+
+      jogosFiltrados.sort((a, b) => obterPesoCronologico(a) - obterPesoCronologico(b));
+
+      jogosFiltrados.forEach(j => {
+        container.appendChild(criarCardJogo(j, false));
+      });
+    }
+
+    function renderBracket() {
+      const container = document.getElementById("bracketTreeContainer");
+      const select = document.getElementById("selectModalidadeBracket");
+      if (!container || !select) return;
+
+      const mod = select.value;
+      container.innerHTML = "";
+
+      const jogosMod = jogosData.filter(j => j.modalidade.toLowerCase().replace(/sete/g, "7") === mod.toLowerCase().replace(/sete/g, "7"));
+
+      if (jogosMod.length === 0) {
+        container.innerHTML = `<div class="text-gray-500 text-xs py-8 text-center w-full">Nenhum confronto de mata-mata cadastrado para esta modalidade.</div>`;
+        return;
+      }
+
+      const oitavas = jogosMod.filter(j => String(j.fase || "").toLowerCase().includes("oitava"));
+      const quartas = jogosMod.filter(j => String(j.fase || "").toLowerCase().includes("quarta"));
+      const semis = jogosMod.filter(j => String(j.fase || "").toLowerCase().includes("semi"));
+      const final = jogosMod.filter(j => String(j.fase || "").toLowerCase().includes("final"));
+
+      const rodadas = [];
+      if (oitavas.length > 0) rodadas.push({ nome: "Oitavas", jogos: oitavas });
+      if (quartas.length > 0) rodadas.push({ nome: "Quartas", jogos: quartas });
+      if (semis.length > 0) rodadas.push({ nome: "Semifinais", jogos: semis });
+      if (final.length > 0) rodadas.push({ nome: "Grande Final", jogos: final, ehFinal: true });
+
+      rodadas.forEach((rodada, idx) => {
+        const coluna = document.createElement("div");
+        coluna.className = `bracket-round flex flex-col justify-around gap-3 ${rodada.ehFinal ? 'bg-amber-50/50 p-2.5 rounded-2xl border-2 border-yellow-300' : ''}`;
+
+        let htmlJogos = `
+          <div class="text-center pb-1 border-b border-gray-200 mb-1">
+            <span class="text-[11px] font-black uppercase tracking-wider ${rodada.ehFinal ? 'text-amber-800' : 'text-gray-500'}">
+              ${rodada.ehFinal ? '👑 ' : ''}${rodada.nome}
+            </span>
+          </div>
+          <div class="flex flex-col justify-around flex-1 gap-2.5">
+        `;
+
+        rodada.jogos.forEach(j => {
+          const enc = j.status === "Encerrado";
+          const aoVivo = j.status === "Em Andamento" || j.status === "Ao Vivo";
+          const t1Venceu = enc && Number(j.p1) > Number(j.p2);
+          const t2Venceu = enc && Number(j.p2) > Number(j.p1);
+
+          htmlJogos += `
+            <div class="bg-white border ${aoVivo ? 'border-red-400 ring-1 ring-red-400 bg-red-50/20' : (rodada.ehFinal ? 'border-amber-300 shadow-sm' : 'border-gray-200 shadow-xs')} rounded-xl p-2 text-xs">
+              <div class="text-[9px] font-bold text-gray-400 flex justify-between items-center mb-1">
+                <span class="truncate max-w-[90px]">${j.fase || ''}</span>
+                <span class="${aoVivo ? 'text-red-600 font-black animate-pulse' : (enc ? 'text-green-600 font-bold' : 'text-gray-400')}">
+                  ${aoVivo ? 'AO VIVO' : (enc ? 'FIM' : (j.horario || 'Breve'))}
+                </span>
+              </div>
+
+              <div class="flex justify-between items-center py-0.5 px-1 rounded ${t1Venceu ? 'bg-green-100/70 font-black text-green-900' : 'text-gray-700 font-semibold'}">
+                <span class="truncate max-w-[100px] flex items-center gap-1">
+                  ${t1Venceu ? '<i class="fas fa-check text-[10px] text-green-600"></i>' : ''}
+                  ${j.t1}
+                </span>
+                <span class="font-black ${t1Venceu ? 'text-green-700' : 'text-gray-500'}">${enc || aoVivo ? j.p1 : '-'}</span>
+              </div>
+
+              <div class="border-t border-gray-100 my-0.5"></div>
+
+              <div class="flex justify-between items-center py-0.5 px-1 rounded ${t2Venceu ? 'bg-green-100/70 font-black text-green-900' : 'text-gray-700 font-semibold'}">
+                <span class="truncate max-w-[100px] flex items-center gap-1">
+                  ${t2Venceu ? '<i class="fas fa-check text-[10px] text-green-600"></i>' : ''}
+                  ${j.t2}
+                </span>
+                <span class="font-black ${t2Venceu ? 'text-green-700' : 'text-gray-500'}">${enc || aoVivo ? j.p2 : '-'}</span>
+              </div>
+            </div>
+          `;
+        });
+
+        htmlJogos += `</div>`;
+        coluna.innerHTML = htmlJogos;
+        container.appendChild(coluna);
+      });
+    }
+
+    function extrairDiaJogo(j) {
+      const h = String(j.horario || "").toLowerCase();
+      if (h.includes("quinta")) return "Quinta";
+      if (h.includes("sexta")) return "Sexta";
+      if (h.includes("sábado") || h.includes("sabado")) return "Sábado";
+      if (h.includes("domingo")) return "Domingo";
+      return "Outros";
+    }
+
+    function atualizarBadgeCampeoes() {
+      const total = colocacoesData.length || jogosData.filter(j => String(j.fase || "").toLowerCase().includes("final") && j.status === "Encerrado").length;
+      const badge = document.getElementById("badgeNumCampeoes");
+      if (total > 0) {
+        badge.innerText = total;
+        badge.classList.remove("hidden");
+      } else {
+        badge.classList.add("hidden");
+      }
+    }
+
+    function renderCampeoes() {
+      const container = document.getElementById("containerCampeoes");
+      if (!container) return;
+      container.innerHTML = "";
+
+      const mapaModalidades = new Map();
+
+      colocacoesData.forEach(c => {
+        if (c.c1) {
+          const jogoRef = jogosData.find(j => j.modalidade.toLowerCase().replace(/sete/g, "7") === c.modalidade.toLowerCase().replace(/sete/g, "7"));
+          const dia = jogoRef ? extrairDiaJogo(jogoRef) : "Quinta";
+
+          const matchDia = (diaCampeoesSelecionado === "Todos" || dia === diaCampeoesSelecionado);
+
+          if (matchDia) {
+            mapaModalidades.set(c.modalidade.toLowerCase().replace(/sete/g, "7"), {
+              modalidade: c.modalidade,
+              dia: dia,
+              c1: c.c1,
+              c2: c.c2,
+              c3: c.c3,
+              c4: c.c4,
+              c5: c.c5
+            });
+          }
+        }
+      });
+
+      jogosData.forEach(j => {
+        const ehFinal = String(j.fase || "").toLowerCase().includes("final");
+        const enc = j.status === "Encerrado";
+        const temVencedor = Number(j.p1) !== Number(j.p2);
+
+        if (ehFinal && enc && temVencedor) {
+          const modKey = j.modalidade.toLowerCase().replace(/sete/g, "7");
+          const dia = extrairDiaJogo(j);
+          const matchDia = (diaCampeoesSelecionado === "Todos" || dia === diaCampeoesSelecionado);
+
+          if (matchDia && !mapaModalidades.has(modKey)) {
+            const campeao = j.p1 > j.p2 ? j.t1 : j.t2;
+            const vice = j.p1 > j.p2 ? j.t2 : j.t1;
+
+            mapaModalidades.set(modKey, {
+              modalidade: j.modalidade,
+              dia: dia,
+              c1: campeao,
+              c2: vice,
+              c3: "",
+              c4: "",
+              c5: ""
+            });
+          }
+        }
+      });
+
+      const listaFinais = Array.from(mapaModalidades.values());
+
+      if (listaFinais.length === 0) {
+        container.innerHTML = `
+          <div class="col-span-full bg-white p-8 rounded-2xl border border-gray-200 text-center space-y-2 shadow-sm">
+            <div class="text-4xl">⏳</div>
+            <h3 class="font-bold text-gray-800 text-base">Nenhum pódio consagrado ainda${diaCampeoesSelecionado !== 'Todos' ? ' para ' + diaCampeoesSelecionado : ''}!</h3>
+            <p class="text-xs text-gray-500">Assim que as provas e finais forem encerradas no painel, as colocações do 1º ao 5º lugar aparecerão aqui.</p>
+          </div>
+        `;
+        return;
+      }
+
+      listaFinais.forEach(item => {
+        const card = document.createElement("div");
+        card.className = "card-ouro p-4 rounded-2xl shadow-md flex flex-col justify-between gap-3 relative overflow-hidden";
+
+        let htmlRestoPodio = "";
+        if (item.c3 || item.c4 || item.c5) {
+          htmlRestoPodio = `<div class="bg-white/70 p-2.5 rounded-xl border border-amber-200 grid grid-cols-3 gap-1 text-center mt-1">`;
+          if (item.c3) htmlRestoPodio += `<div><span class="text-[9px] font-black uppercase text-amber-800 block">🥉 3º Lugar</span><span class="text-xs font-bold text-gray-800 truncate block">${item.c3}</span></div>`;
+          if (item.c4) htmlRestoPodio += `<div><span class="text-[9px] font-black uppercase text-gray-500 block">4º Lugar</span><span class="text-xs font-bold text-gray-800 truncate block">${item.c4}</span></div>`;
+          if (item.c5) htmlRestoPodio += `<div><span class="text-[9px] font-black uppercase text-gray-500 block">5º Lugar</span><span class="text-xs font-bold text-gray-800 truncate block">${item.c5}</span></div>`;
+          htmlRestoPodio += `</div>`;
+        }
+
+        card.innerHTML = `
+          <div class="flex justify-between items-center border-b border-amber-200 pb-2">
+            <div>
+              <span class="text-xs font-black uppercase text-amber-900 bg-amber-200/60 px-2.5 py-0.5 rounded-md">${item.modalidade}</span>
+              <span class="text-[11px] font-bold text-amber-800 ml-1.5"><i class="far fa-calendar-alt mr-1"></i>${item.dia}</span>
+            </div>
+            <span class="text-xs font-black text-amber-700 bg-white/80 px-2 py-0.5 rounded-full border border-amber-300 shadow-xs">PÓDIO OFICIAL</span>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2 my-1">
+            <div class="bg-white/95 p-3 rounded-xl border-2 border-yellow-400 shadow-sm text-center relative flex flex-col justify-center">
+              <span class="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-yellow-400 text-amber-950 text-[10px] font-black uppercase px-2 py-0.2 rounded-full shadow-xs">
+                🥇 CAMPEÃO
+              </span>
+              <div class="text-xl font-black text-amber-950 mt-1">${item.c1}</div>
+            </div>
+
+            <div class="bg-white/75 p-3 rounded-xl border border-gray-300 text-center relative flex flex-col justify-center">
+              <span class="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-gray-300 text-gray-800 text-[10px] font-black uppercase px-2 py-0.2 rounded-full shadow-xs">
+                🥈 VICE
+              </span>
+              <div class="text-lg font-black text-gray-700 mt-1">${item.c2}</div>
+            </div>
+          </div>
+
+          ${htmlRestoPodio}
+
+          <div class="flex justify-between items-center pt-2 border-t border-amber-200 text-xs">
+            <span class="text-[10px] font-bold text-amber-800"><i class="fas fa-trophy mr-1 text-yellow-600"></i>Pontuação Geral Gravada</span>
+            <button onclick="compartilharPodio('${item.modalidade}', '${item.c1}', '${item.c2}', '${item.c3}', '${item.c4}', '${item.c5}')"
+                    class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-lg font-bold text-xs flex items-center gap-1.5 shadow-sm transition">
+              <i class="fab fa-whatsapp"></i>
+              <span>Compartilhar Pódio</span>
+            </button>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function compartilharPodio(modalidade, c1, c2, c3, c4, c5) {
+      let texto = `🏆🦈 *PÓDIO OFICIAL — JIM 2026.2!* 🦈🏆\n\n`;
+      texto += `🥇 *Campeão:* ${c1} (${modalidade})\n`;
+      texto += `🥈 *Vice:* ${c2}\n`;
+      if (c3) texto += `🥉 *3º Lugar:* ${c3}\n`;
+      if (c4) texto += `🎖️ *4º Lugar:* ${c4}\n`;
+      if (c5) texto += `🎖️ *5º Lugar:* ${c5}\n`;
+      texto += `\n📲 Confira a classificação geral ao vivo:\n`;
+      texto += `https://jim-2026-2.vercel.app/`;
+
+      const urlWhatsApp = `https://api.whatsapp.com/send?text=${encodeURIComponent(texto)}`;
+      window.open(urlWhatsApp, '_blank');
+    }
+
+    function compartilharWhatsApp(modalidade, t1, t2, p1, p2, status, horario, local) {
+      let texto = `🏆 *JIM 2026.2 — AAAMCTN*\n`;
+      texto += `⚽ *${modalidade}*\n\n`;
+
+      if (status === "Encerrado") {
+        texto += `🏁 *FIM DE JOGO!*\n`;
+        texto += `👉 *${t1}* ${p1} x ${p2} *${t2}*\n\n`;
+      } else if (status === "Em Andamento" || status === "Ao Vivo") {
+        texto += `🔴 *ROLANDO AGORA!*\n`;
+        texto += `👉 *${t1}* ${p1} x ${p2} *${t2}*\n\n`;
+      } else {
+        texto += `⏳ *PRÓXIMO CONFRONTO:*\n`;
+        texto += `👉 *${t1}* vs *${t2}*\n`;
+        texto += `⏰ ${horario || 'Horário a definir'}${local ? ' • ' + local : ''}\n\n`;
+      }
+
+      texto += `📲 Acompanhe todos os placares ao vivo:\n`;
+      texto += `https://jim-2026-2.vercel.app/`;
+
+      const urlWhatsApp = `https://api.whatsapp.com/send?text=${encodeURIComponent(texto)}`;
+      window.open(urlWhatsApp, '_blank');
+    }
+
+    function criarCardJogo(j, isLive) {
+      const enc = j.status === 'Encerrado';
+      const aoVivo = j.status === 'Em Andamento' || j.status === 'Ao Vivo';
+      
+      const t1Str = String(j.t1).trim().toLowerCase();
+      const t2Str = String(j.t2).trim().toLowerCase();
+      const turmaBusca = String(turmaLocal).trim().toLowerCase();
+      
+      const souTime1 = turmaLocal !== "Todas" && (t1Str === turmaBusca || t1Str.includes(turmaBusca));
+      const souTime2 = turmaLocal !== "Todas" && (t2Str === turmaBusca || t2Str.includes(turmaBusca));
+      const isMinhaTurma = souTime1 || souTime2;
+
+      const time1Venceu = enc && j.p1 > j.p2;
+      const time2Venceu = enc && j.p2 > j.p1;
+
+      let minhaTurmaVenceu = false;
+      let minhaTurmaPerdeu = false;
+
+      if (isMinhaTurma && enc) {
+        if ((souTime1 && time1Venceu) || (souTime2 && time2Venceu)) {
+          minhaTurmaVenceu = true;
+        } else if ((souTime1 && time2Venceu) || (souTime2 && time1Venceu)) {
+          minhaTurmaPerdeu = true;
+        }
+      }
+
+      let classDestaque = "";
+      if (aoVivo) {
+        classDestaque = "border-red-400 bg-red-50";
+      } else if (minhaTurmaVenceu) {
+        classDestaque = "vitoria jogo-destaque";
+      } else if (minhaTurmaPerdeu) {
+        classDestaque = "derrota jogo-destaque";
+      } else if (isMinhaTurma) {
+        classDestaque = "jogo-destaque";
+      }
+
+      const card = document.createElement("div");
+      card.className = `bg-white p-4 rounded-xl shadow-sm border border-gray-200 ${classDestaque}`;
+
+      let badgeNovo = "";
+      if (aoVivo) {
+        badgeNovo = `<span class="badge-novo text-xs font-bold bg-red-500 text-white px-2 py-1 rounded-full ml-2">🔴 AO VIVO</span>`;
+      } else if (enc) {
+        badgeNovo = `<span class="badge-novo text-xs font-bold bg-green-500 text-white px-2 py-1 rounded-full ml-2">✓ ENCERRADO</span>`;
+      }
+
+      card.innerHTML = `
+        <div class="flex justify-between items-center mb-2">
+          <span class="text-xs font-bold text-blue-700 bg-blue-50 px-2.5 py-1 rounded-md">${j.modalidade}</span>
+          <div class="flex items-center">
+            <span class="text-xs font-semibold ${aoVivo ? 'text-red-600 bg-red-50 px-2 py-0.5 rounded' : (enc ? (j.fase || 'Encerrado') : 'text-amber-600 bg-amber-50 px-2 py-0.5 rounded')}">
+              ${aoVivo ? 'AO VIVO' : (enc ? (j.fase || 'Encerrado') : (j.horario || 'Em breve'))}
+            </span>
+            ${j.local ? `<span class="text-xs text-gray-500 ml-2"><i class="fas fa-map-marker-alt mr-1"></i>${j.local}</span>` : ''}
+            ${badgeNovo}
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between bg-gray-50 p-3 rounded-lg mt-2">
+          <div class="w-5/12 text-center font-bold text-sm ${time1Venceu ? 'text-green-700 font-extrabold' : 'text-gray-800'}">
+            ${time1Venceu ? '<i class="fas fa-trophy text-yellow-500 mr-1"></i>' : ''} ${j.t1}
+          </div>
+
+          <div class="w-2/12 flex items-center justify-center gap-1.5 font-extrabold text-lg">
+            <span class="${time1Venceu ? 'text-green-600 text-xl' : 'text-gray-700'}">${j.p1}</span>
+            <span class="text-gray-400 font-normal">x</span>
+            <span class="${time2Venceu ? 'text-green-600 text-xl' : 'text-gray-700'}">${j.p2}</span>
+          </div>
+
+          <div class="w-5/12 text-center font-bold text-sm ${time2Venceu ? 'text-green-700 font-extrabold' : 'text-gray-800'}">
+            ${j.t2} ${time2Venceu ? '<i class="fas fa-trophy text-yellow-500 ml-1"></i>' : ''}
+          </div>
+        </div>
+
+        <!-- BOTÃO COMPARTILHAR WHATSAPP -->
+        <div class="flex justify-end mt-2 pt-2 border-t border-gray-100">
+          <button onclick="compartilharWhatsApp('${j.modalidade}', '${j.t1}', '${j.t2}', ${j.p1}, ${j.p2}, '${j.status}', '${j.horario || ''}', '${j.local || ''}')" 
+                  class="text-[11px] font-bold text-green-700 hover:text-green-800 bg-green-50 hover:bg-green-100 px-2.5 py-1 rounded-lg transition flex items-center gap-1.5 shadow-sm">
+            <i class="fab fa-whatsapp text-green-600 text-sm"></i>
+            <span>Compartilhar</span>
+          </button>
+        </div>
+      `;
+      return card;
     }
 
     // Inicialização
-    setInterval(atualizarRelogio, 1000);
-    atualizarRelogio();
-    buscarDadosTelao();
-    setInterval(buscarDadosTelao, 6000);
-    setInterval(executarAutoScroll, 50);
+    definirDiaAtualAutomatico();
+    carregarTurmaLocal();
+    carregarJogos();
+    setInterval(carregarJogos, 10000);
   </script>
 </body>
 </html>
